@@ -1086,6 +1086,11 @@ message ROIPoolingParameter {
   // Multiplicative spatial scale factor to translate ROI coords from their
   // input scale to the scale used when pooling
   optional float spatial_scale = 3 [default = 1];
+  optional PoolMethod pool = 4 [default = MAX]; // The pooling method
+  enum PoolMethod {
+    MAX = 0;
+    AVE = 1;
+  }
 }
 
 message ScaleParameter {

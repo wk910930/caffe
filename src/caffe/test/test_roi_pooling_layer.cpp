@@ -11,7 +11,7 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/filler.hpp"
-#include "caffe/vision_layers.hpp"
+#include "caffe/layers/roi_pooling_layer.hpp"
 
 #include "caffe/test/test_caffe_main.hpp"
 #include "caffe/test/test_gradient_check_util.hpp"
@@ -105,13 +105,14 @@ class ROIPoolingLayerTest : public MultiDeviceTest<TypeParam> {
 
 TYPED_TEST_CASE(ROIPoolingLayerTest, TestDtypesAndDevices);
 
-TYPED_TEST(ROIPoolingLayerTest, TestForward) {
+TYPED_TEST(ROIPoolingLayerTest, TestForward_MAX) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   ROIPoolingParameter* roi_pooling_param =
       layer_param.mutable_roi_pooling_param();
 
   // 12 x 20 pooling with bin_size_h == 1 && bin_size_w == 1
+  roi_pooling_param->set_pool(ROIPoolingParameter_PoolMethod_MAX);
   roi_pooling_param->set_pooled_h(12);
   roi_pooling_param->set_pooled_w(20);
   ROIPoolingLayer<Dtype> layer_2(layer_param);
@@ -146,15 +147,74 @@ TYPED_TEST(ROIPoolingLayerTest, TestForward) {
   }
 }
 
-TYPED_TEST(ROIPoolingLayerTest, TestGradient) {
+TYPED_TEST(ROIPoolingLayerTest, TestForward_AVE) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   ROIPoolingParameter* roi_pooling_param =
       layer_param.mutable_roi_pooling_param();
+
+  // 12 x 20 pooling with bin_size_h == 1 && bin_size_w == 1
+  roi_pooling_param->set_pool(ROIPoolingParameter_PoolMethod_AVE);
+  roi_pooling_param->set_pooled_h(12);
+  roi_pooling_param->set_pooled_w(20);
+  ROIPoolingLayer<Dtype> layer_2(layer_param);
+  layer_2.SetUp(this->blob_bottom_vec_2_, this->blob_top_vec_2_);
+  layer_2.Forward(this->blob_bottom_vec_2_, this->blob_top_vec_2_);
+  for (int i = 0; i < this->blob_top_data_2_->count(); ++i) {
+    EXPECT_EQ(this->blob_top_data_2_->cpu_data()[i],
+        this->blob_bottom_data_2_->cpu_data()[i+3*12*20]);
+  }
+
+  // 6 x 10 pooling with bin_size_h == 2 && bin_size_w == 2
+  roi_pooling_param->set_pooled_h(6);
+  roi_pooling_param->set_pooled_w(10);
+  ROIPoolingLayer<Dtype> layer(layer_param);
+  layer.SetUp(this->blob_bottom_vec_2_, this->blob_top_vec_2_);
+  layer.Forward(this->blob_bottom_vec_2_, this->blob_top_vec_2_);
+  int n = 1;
+  for (int c = 0; c < 3; ++c) {
+    for (int ph = 0; ph < 6; ++ph) {
+      for (int pw = 0; pw < 10; ++pw) {
+        Dtype ave_value = Dtype(0);
+        int pool_size = 2 * 2;
+        for (int h = 2 * ph; h < 2 * (ph + 1); ++h) {
+          for (int w = 2 * pw; w < 2 * (pw + 1); ++w) {
+            ave_value += this->blob_bottom_data_2_->cpu_data()[
+                ((n * 3 + c) * 12 + h) * 20 + w];
+          }
+        }
+        ave_value /= pool_size;
+        EXPECT_EQ(this->blob_top_data_2_->cpu_data()[(c * 6 + ph) * 10 + pw],
+            ave_value);
+      }
+    }
+  }
+}
+
+TYPED_TEST(ROIPoolingLayerTest, TestGradient_MAX) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  ROIPoolingParameter* roi_pooling_param =
+      layer_param.mutable_roi_pooling_param();
+  roi_pooling_param->set_pool(ROIPoolingParameter_PoolMethod_MAX);
   roi_pooling_param->set_pooled_h(3);
   roi_pooling_param->set_pooled_w(4);
   ROIPoolingLayer<Dtype> layer(layer_param);
   GradientChecker<Dtype> checker(1e-4, 1e-2);
+  checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
+      this->blob_top_vec_, 0);
+}
+
+TYPED_TEST(ROIPoolingLayerTest, TestGradient_AVE) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  ROIPoolingParameter* roi_pooling_param =
+      layer_param.mutable_roi_pooling_param();
+  roi_pooling_param->set_pool(ROIPoolingParameter_PoolMethod_AVE);
+  roi_pooling_param->set_pooled_h(3);
+  roi_pooling_param->set_pooled_w(4);
+  ROIPoolingLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-2);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 0);
 }
