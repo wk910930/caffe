@@ -2,7 +2,6 @@
 #include <vector>
 
 #include "caffe/layers/bn_layer.hpp"
-#include "caffe/util/math_functions.hpp"
 
 namespace caffe {
 

@@ -3,7 +3,6 @@
 
 #include "caffe/layers/bn_layer.hpp"
 #include "caffe/filler.hpp"
-#include "caffe/util/math_functions.hpp"
 
 namespace caffe {
 
@@ -342,5 +341,6 @@ STUB_GPU(BNLayer);
 #endif
 
 INSTANTIATE_CLASS(BNLayer);
+REGISTER_LAYER_CLASS(BN);
 
 }  // namespace caffe
