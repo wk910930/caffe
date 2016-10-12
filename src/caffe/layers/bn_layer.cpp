@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <vector>
 
-#include "caffe/layers/bn_layer.hpp"
 #include "caffe/filler.hpp"
+#include "caffe/layers/bn_layer.hpp"
 
 namespace caffe {
 
