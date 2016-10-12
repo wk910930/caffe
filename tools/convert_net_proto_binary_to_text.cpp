@@ -1,4 +1,3 @@
-#include <iostream>
 #include "caffe/util/io.hpp"
 
 int main(int argc, char* argv[]) {
