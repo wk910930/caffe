@@ -1,9 +1,4 @@
-// ------------------------------------------------------------------
-// Fast R-CNN
-// Copyright (c) 2015 Microsoft
-// Licensed under The MIT License [see fast-rcnn/LICENSE for details]
-// Written by Ross Girshick
-// ------------------------------------------------------------------
+#include <vector>
 
 #include "caffe/layers/smooth_l1_loss_layer.hpp"
 
