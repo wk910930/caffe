@@ -388,6 +388,7 @@ message LayerParameter {
   optional MVNParameter mvn_param = 120;
   optional NormalizeParameter norm_param = 504;
   optional ParameterParameter parameter_param = 145;
+  optional PermuteParameter permute_param = 505;
   optional PoolingParameter pooling_param = 121;
   optional PowerParameter power_param = 122;
   optional PReLUParameter prelu_param = 131;
@@ -910,6 +911,13 @@ message NormalizeParameter {
 
 message ParameterParameter {
   optional BlobShape shape = 1;
+}
+
+message PermuteParameter {
+  // The new orders of the axes of data. Notice it should be with
+  // in the same range as the input data, and it starts from 0.
+  // Do not provide repeated order.
+  repeated uint32 order = 1;
 }
 
 message PoolingParameter {
