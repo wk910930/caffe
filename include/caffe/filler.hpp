@@ -261,6 +261,28 @@ class BilinearFiller : public Filler<Dtype> {
   }
 };
 
+template <typename Dtype>
+class TestLocalFiller : public Filler<Dtype> {
+ public:
+  explicit TestLocalFiller(const FillerParameter& param)
+      : Filler<Dtype>(param) {}
+  virtual void Fill(Blob<Dtype>* blob) {
+    LOG(INFO) << "Doing mutable cpu";
+    LOG(INFO) << "blobs" << blob;
+    Dtype* data = blob->mutable_cpu_data();
+    LOG(INFO) << "Done Doing mutable cpu";
+    CHECK_EQ(blob->channels(), 1);
+
+    for (int n = 0; n < blob->num(); n++) {
+      for (int j = 0; j < blob->height(); j++) {
+        for (int i = 0; i < blob->width(); i++) {
+          *(data+blob->offset(n, 0, j, i)) = i;
+        }
+      }
+    }
+  }
+};
+
 /**
  * @brief Get a specific filler from the specification given in FillerParameter.
  *
@@ -284,6 +306,8 @@ Filler<Dtype>* GetFiller(const FillerParameter& param) {
     return new MSRAFiller<Dtype>(param);
   } else if (type == "bilinear") {
     return new BilinearFiller<Dtype>(param);
+  } else if (type == "test_local") {
+    return new TestLocalFiller<Dtype>(param);
   } else {
     CHECK(false) << "Unknown filler name: " << param.type();
   }
