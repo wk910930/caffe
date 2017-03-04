@@ -23,15 +23,15 @@ namespace caffe {
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
-  init_cpu = false;
-  init_gpu = false;
-  const caffe::MultiStageMeanfieldParameter meanfield_param = this->layer_param_.multi_stage_meanfield_param();
+    const vector<Blob<Dtype>*>& top) {
+  init_cpu_ = false;
+  init_gpu_ = false;
+  const caffe::MultiStageMeanfieldParameter& meanfield_param = this->layer_param_.multi_stage_meanfield_param();
 
   num_iterations_ = meanfield_param.num_iterations();
-
   CHECK_GT(num_iterations_, 1) << "Number of iterations must be greater than 1.";
 
+  // bandwidth values of Gaussian kernels
   theta_alpha_ = meanfield_param.theta_alpha();
   theta_beta_ = meanfield_param.theta_beta();
   theta_gamma_ = meanfield_param.theta_gamma();
@@ -43,8 +43,9 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
   width_ = bottom[0]->width();
   num_pixels_ = height_ * width_;
 
-  LOG(INFO) << "This implementation has not been tested batch size > 1.";
-
+  if (num_ > 1) {
+    LOG(INFO) << "This implementation has not been tested batch size > 1.";
+  }
   top[0]->Reshape(num_, channels_, height_, width_);
 
   // Initialize the parameters that will updated by backpropagation.
@@ -61,7 +62,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
   spatial_norm_.Reshape(1, 1, height_, width_);
   Dtype* norm_data_gpu;
   Dtype*  norm_data;
-  // Initialize the spatial lattice. This does not need to be computed for every image because we use a fixed size.
+  // Initialize the spatial lattice.
+  // This does not need to be computed for every image because we use a fixed size.
   switch (Caffe::mode()) {
     case Caffe::CPU:
       norm_data = spatial_norm_.mutable_cpu_data();
@@ -72,7 +74,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
       // pass norm_feed and norm_data to gpu
       spatial_lattice_->compute(norm_data, norm_feed_, 1);
       bilateral_kernel_buffer_ = new float[5 * num_pixels_];
-      init_cpu = true;
+      init_cpu_ = true;
       break;
     #ifndef CPU_ONLY
     case Caffe::GPU:
@@ -86,11 +88,11 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
       norm_data = spatial_norm_.mutable_cpu_data();
       CUDA_CHECK(cudaMalloc((void**)&bilateral_kernel_buffer_, 5 * num_pixels_ * sizeof(float)));
       CUDA_CHECK(cudaFree(spatial_kernel_gpu_));
-      init_gpu = true;
+      init_gpu_ = true;
       break;
     #endif
     default:
-    LOG(FATAL) << "Unknown caffe mode.";
+      LOG(FATAL) << "Unknown caffe mode.";
   }
   for (int i = 0; i < num_pixels_; ++i) {
     norm_data[i] = 1.0f / (norm_data[i] + 1e-20f);
@@ -151,7 +153,7 @@ void MultiStageMeanfieldLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom
  */
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+    const vector<Blob<Dtype>*>& top) {
   split_layer_bottom_vec_[0] = bottom[0];
   split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
 
@@ -204,12 +206,12 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
 
 template<typename Dtype>
 MultiStageMeanfieldLayer<Dtype>::~MultiStageMeanfieldLayer() {
-  if (init_cpu) {
+  if (init_cpu_) {
       delete[] bilateral_kernel_buffer_;
       delete[] norm_feed_;
   }
   #ifndef CPU_ONLY
-  if (init_gpu) {
+  if (init_gpu_) {
       CUDA_CHECK(cudaFree(bilateral_kernel_buffer_));
       CUDA_CHECK(cudaFree(norm_feed_));
   }
@@ -217,7 +219,7 @@ MultiStageMeanfieldLayer<Dtype>::~MultiStageMeanfieldLayer() {
 }
 
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(const MultiStageMeanfieldParameter &meanfield_param) {
+void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(const MultiStageMeanfieldParameter& meanfield_param) {
   // blobs_[0] - spatial kernel weights
   // blobs_[1] - bilateral kernel weights
   // blobs_[2] - compatibility matrix
@@ -243,12 +245,12 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(const MultiStageMeanfield
 
 template<typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(const Blob<Dtype>* const rgb_blob, const int n,
-                                                               float* const output_kernel) {
+    float* const output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
     output_kernel[5 * p] = static_cast<float>(p % width_) / theta_alpha_;
     output_kernel[5 * p + 1] = static_cast<float>(p / width_) / theta_alpha_;
 
-    const Dtype * const rgb_data_start = rgb_blob->cpu_data() + rgb_blob->offset(n);
+    const Dtype* rgb_data_start = rgb_blob->cpu_data() + rgb_blob->offset(n);
     output_kernel[5 * p + 2] = static_cast<float>(rgb_data_start[p] / theta_beta_);
     output_kernel[5 * p + 3] = static_cast<float>((rgb_data_start + num_pixels_)[p] / theta_beta_);
     output_kernel[5 * p + 4] = static_cast<float>((rgb_data_start + num_pixels_ * 2)[p] / theta_beta_);

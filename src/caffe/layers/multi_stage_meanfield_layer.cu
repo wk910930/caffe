@@ -19,15 +19,15 @@
 #include "caffe/layers/multi_stage_meanfield_layer.hpp"
 
 namespace caffe {
-  
+
 // Avoid divergence by uncoalescing access
 template <typename Dtype>
-__global__ void  computeBilateralKernel(const  int num_pixels_, 
-    const Dtype* const rgb_blob, 
+__global__ void  computeBilateralKernel(const  int num_pixels_,
+    const Dtype* const rgb_blob,
     const int width_, const int height_, const int channels_,
     float theta_alpha_, float theta_beta_,
     const int n, float* const output_kernel) {
-  int offset = ((n * channels_ ) * height_) * width_ ;
+  int offset = ((n * channels_) * height_) * width_;
   CUDA_KERNEL_LOOP(p, num_pixels_) {
     output_kernel[5 * p] = (float)(p % width_) / theta_alpha_;
     output_kernel[5 * p + 1] = (float)(p / width_) / theta_alpha_;
@@ -39,7 +39,7 @@ __global__ void  computeBilateralKernel(const  int num_pixels_,
 }
 
 template <typename Dtype>
-__global__ void computeNorm(Dtype* norm_output_data, int num_pixels){
+__global__ void computeNorm(Dtype* norm_output_data, int num_pixels) {
   CUDA_KERNEL_LOOP(i, num_pixels) {
     norm_output_data[i] = 1.f / (norm_output_data[i] + 1e-20f);
   }
@@ -56,11 +56,11 @@ __global__ void computeNorm(Dtype* norm_output_data, int num_pixels){
  */
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
-
-  if(init_cpu)
+    const vector<Blob<Dtype>*>& top) {
+  if (init_cpu_) {
     LOG(FATAL) << ("You initialize your network on CPU, please initialize it on GPU.");
-  const Dtype* bottom_data = bottom[2]->gpu_data() ;
+  }
+  const Dtype* bottom_data = bottom[2]->gpu_data();
   split_layer_bottom_vec_[0] = bottom[0];
   split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
 
@@ -89,14 +89,13 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bo
 /**
  * Backprop through filter-based mean field inference.
  */
- 
 template<typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Backward_gpu(
     const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
-
-  if(init_cpu)
+  if (init_cpu_) {
     LOG(FATAL) << ("You initialize your network on CPU, please initialize it on GPU.");
+  }
 
   for (int i = (num_iterations_ - 1); i >= 0; --i) {
     meanfield_iterations_[i]->Backward_gpu();
@@ -107,13 +106,9 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_gpu(
 
   // Accumulate diffs from mean field iterations.
   for (int blob_id = 0; blob_id < this->blobs_.size(); ++blob_id) {
-
     Blob<Dtype>* cur_blob = this->blobs_[blob_id].get();
-
     if (this->param_propagate_down_[blob_id]) {
-
       caffe_gpu_set(cur_blob->count(), Dtype(0), cur_blob->mutable_gpu_diff());
-
       for (int i = 0; i < num_iterations_; ++i) {
         const Dtype* diffs_to_add = meanfield_iterations_[i]->blobs()[blob_id]->gpu_diff();
         caffe_gpu_axpy(cur_blob->count(), Dtype(1.), diffs_to_add, cur_blob->mutable_gpu_diff());

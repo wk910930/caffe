@@ -1,4 +1,3 @@
-//#include "stdafx.h"
 #include "caffe/util/modified_permutohedral.hpp"
 
 #ifdef __SSE__

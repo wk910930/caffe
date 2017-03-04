@@ -67,8 +67,8 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   int width_;
   int num_pixels_;
 
-  bool init_cpu;
-  bool init_gpu;
+  bool init_cpu_;
+  bool init_gpu_;
   
   Dtype theta_alpha_;
   Dtype theta_beta_;

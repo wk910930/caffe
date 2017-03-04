@@ -22,12 +22,11 @@ typedef struct MatrixEntry {
   float weight;
 } MatrixEntry;
 
-class ModifiedPermutohedral
-{
-protected:
+class ModifiedPermutohedral {
+ protected:
   struct Neighbors{
     int n1, n2;
-    Neighbors( int n1=0, int n2=0 ):n1(n1),n2(n2){
+    Neighbors(int n1 = 0, int n2 = 0):n1(n1), n2(n2){
     }
   };
 
@@ -61,17 +60,16 @@ protected:
   void seqCompute(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
   void seqCompute(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
 
-
-public:
+ public:
   ModifiedPermutohedral();
-  ~ModifiedPermutohedral(){
+  ~ModifiedPermutohedral() {
   #ifndef CPU_ONLY
-    if(is_init)
+    if (is_init)
       CUDA_CHECK(cudaFree(matrix));
   #endif
   }
 
-  void init (const float* features, int num_dimensions, int w, int h){
+  void init(const float* features, int num_dimensions, int w, int h) {
     switch (Caffe::mode()) {
       case Caffe::CPU:
         init_cpu(features, num_dimensions, w*h);
@@ -86,7 +84,7 @@ public:
         LOG(FATAL) << "Unknown caffe mode.";
     }
   }
-  void compute(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const{
+  void compute(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const {
     switch (Caffe::mode()) {
       case Caffe::CPU:
         compute_cpu(out, in, value_size, reverse, add);
@@ -114,7 +112,7 @@ public:
         LOG(FATAL) << "Unknown caffe mode.";
     }
   }
-
 };
-}//namespace caffe
-#endif //CAFFE_MODIFIED_PERMUTOHEDRAL_HPP_
+}  // namespace caffe
+
+#endif  // CAFFE_MODIFIED_PERMUTOHEDRAL_HPP_

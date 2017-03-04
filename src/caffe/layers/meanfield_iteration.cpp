@@ -47,9 +47,9 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
     LOG(INFO) << "Meanfield iteration skipping parameter initialization.";
   } else {
     blobs_.resize(3);
-    blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_)); // spatial kernel weight
-    blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_)); // bilateral kernel weight
-    blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_)); // compatibility transform matrix
+    blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_));  // spatial kernel weight
+    blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_));  // bilateral kernel weight
+    blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));  // compatibility transform matrix
   }
 
   pairwise_.Reshape(num_, channels_, height_, width_);
@@ -107,28 +107,23 @@ void MeanfieldIteration<Dtype>::PrePass(
  */
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::Forward_cpu() {
-
-
   //------------------------------- Softmax normalization--------------------
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
   //-----------------------------------Message passing-----------------------
   for (int n = 0; n < num_; ++n) {
-
+    // spatial kernel
     Dtype* spatial_out_data = spatial_out_blob_.mutable_cpu_data() + spatial_out_blob_.offset(n);
     const Dtype* prob_input_data = prob_.cpu_data() + prob_.offset(n);
-
     spatial_lattice_->compute(spatial_out_data, prob_input_data, channels_, false);
-
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_, spatial_norm_->cpu_data(),
           spatial_out_data + channel_id * num_pixels_,
           spatial_out_data + channel_id * num_pixels_);
     }
-
+    // bilateral kernel
     Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data() + bilateral_out_blob_.offset(n);
-
     (*bilateral_lattices_)[n]->compute(bilateral_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
@@ -137,23 +132,20 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
           bilateral_out_data + channel_id * num_pixels_);
     }
   }
-
   caffe_set(count_, Dtype(0.), message_passing_.mutable_cpu_data());
-
   for (int n = 0; n < num_; ++n) {
-    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype) 1.,
-        this->blobs_[0]->cpu_data(), spatial_out_blob_.cpu_data() + spatial_out_blob_.offset(n), (Dtype) 0.,
+    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype)1.,
+        this->blobs_[0]->cpu_data(), spatial_out_blob_.cpu_data() + spatial_out_blob_.offset(n), (Dtype)0.,
         message_passing_.mutable_cpu_data() + message_passing_.offset(n));
   }
-
   for (int n = 0; n < num_; ++n) {
-    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype) 1.,
-        this->blobs_[1]->cpu_data(), bilateral_out_blob_.cpu_data() + bilateral_out_blob_.offset(n), (Dtype) 1.,
+    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype)1.,
+        this->blobs_[1]->cpu_data(), bilateral_out_blob_.cpu_data() + bilateral_out_blob_.offset(n), (Dtype)1.,
         message_passing_.mutable_cpu_data() + message_passing_.offset(n));
   }
 
   //--------------------------- Compatibility multiplication ----------------
-  //Result from message passing needs to be multiplied with compatibility values.
+  // Result from message passing needs to be multiplied with compatibility values.
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_,
         channels_, (Dtype) 1., this->blobs_[2]->cpu_data(),
@@ -161,16 +153,12 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
         pairwise_.mutable_cpu_data() + pairwise_.offset(n));
   }
 
-  //------------------------- Adding unaries, normalization is left to the next iteration --------------
-  // Add unary
+  //------------------------- Adding unary, normalization is left to the next iteration --------------
   sum_layer_->Forward(sum_bottom_vec_, sum_top_vec_);
 }
 
-
 template<typename Dtype>
 void MeanfieldIteration<Dtype>::Backward_cpu() {
-
-
   //---------------------------- Add unary gradient --------------------------
   vector<bool> eltwise_propagate_down(2, true);
   sum_layer_->Backward(sum_top_vec_, eltwise_propagate_down, sum_bottom_vec_);
@@ -211,20 +199,6 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
                           this->blobs_[1]->mutable_cpu_diff());
   }
 
-  /*Dtype* tmp = new Dtype[count_];
-  caffe_mul<Dtype>(count_, message_passing_.cpu_diff(), spatial_out_blob_.cpu_data(), tmp);
-
-  for (int c = 0; c < count_; ++c) {
-    (this->blobs_[0]->mutable_cpu_diff())[0] += tmp[c];
-  }
-
-  caffe_mul<Dtype>(count_, message_passing_.cpu_diff(), bilateral_out_blob_.cpu_data(), tmp);
-  for (int c = 0; c < count_; ++c) {
-    (this->blobs_[1]->mutable_cpu_diff())[0] += tmp[c];
-  }
-
-  delete[] tmp;*/
-
   // TODO: Check whether there's a way to improve the accuracy of this calculation.
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype) 1.,
@@ -232,8 +206,6 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
                           (Dtype) 0.,
                           spatial_out_blob_.mutable_cpu_diff() + spatial_out_blob_.offset(n));
   }
-  //caffe_cpu_scale<Dtype>(count_, (this->blobs_[0]->cpu_data())[0],
-  //    message_passing_.cpu_diff(), spatial_out_blob_.mutable_cpu_diff());
 
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype) 1.,
@@ -241,13 +213,9 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
                           (Dtype) 0.,
                           bilateral_out_blob_.mutable_cpu_diff() + bilateral_out_blob_.offset(n));
   }
-  //caffe_cpu_scale<Dtype>(count_, (this->blobs_[1]->cpu_data())[0],
-  //    message_passing_.cpu_diff(), bilateral_out_blob_.mutable_cpu_diff());
-
 
   //---------------------------- BP thru normalization --------------------------
   for (int n = 0; n < num_; ++n) {
-
     Dtype *spatial_out_diff = spatial_out_blob_.mutable_cpu_diff() + spatial_out_blob_.offset(n);
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_, spatial_norm_->cpu_data(),
@@ -265,7 +233,6 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
 
   //--------------------------- Gradient for message passing ---------------
   for (int n = 0; n < num_; ++n) {
-
     spatial_lattice_->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
                               spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n), channels_,
                               true, false);
