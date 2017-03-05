@@ -45,15 +45,6 @@ class ModifiedPermutohedral {
   // Number of elements, size of sparse discretized space, dimension of features width and height
   int N_, M_, d_, w_, h_;
 
-  void init_cpu(const float* features, int num_dimensions, int num_points);
-  void init_gpu(const float* features, int num_dimensions, int w, int h);
-
-  void compute_cpu(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
-  void compute_cpu(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
-
-  void compute_gpu(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
-  void compute_gpu(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
-
   void sseCompute(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
   void sseCompute(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
 
@@ -68,6 +59,15 @@ class ModifiedPermutohedral {
       CUDA_CHECK(cudaFree(matrix));
   #endif
   }
+
+  void init_cpu(const float* features, int num_dimensions, int num_points);
+  void init_gpu(const float* features, int num_dimensions, int w, int h);
+
+  void compute_cpu(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
+  void compute_cpu(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
+
+  void compute_gpu(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
+  void compute_gpu(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
 
   void init(const float* features, int num_dimensions, int w, int h) {
     switch (Caffe::mode()) {
