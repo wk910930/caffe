@@ -46,7 +46,7 @@ __global__ void computeNorm(Dtype* norm_output_data, int num_pixels) {
 }
 
 /**
- * Performs filter-based mean field inference given the image and unaries.
+ * Performs filter-based mean field inference given the image and unary.
  *
  * bottom[0] - Unary terms
  * bottom[1] - Softmax input/Output from the previous iteration (a copy of the unary terms if this is the first stage).
@@ -69,8 +69,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bo
   for (int n = 0; n < num_; ++n) {
     computeBilateralKernel<Dtype><<<CAFFE_GET_BLOCKS(num_pixels_), CAFFE_CUDA_NUM_THREADS>>>(
         num_pixels_, bottom_data, width_, height_, channels_,
-        theta_alpha_, theta_beta_, n,
-        bilateral_kernel_buffer_);
+        theta_alpha_, theta_beta_, n, bilateral_kernel_buffer_);
     CUDA_POST_KERNEL_CHECK;
     bilateral_lattices_[n].reset(new ModifiedPermutohedral());
     bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, width_, height_);
