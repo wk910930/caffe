@@ -51,10 +51,12 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
  private:
+  void init_param_blobs(const MultiStageMeanfieldParameter & meanfield_param);
+  void init_spatial_lattice();
+  void init_bilateral_buffers();
   virtual void compute_spatial_kernel(float* const output_kernel);
   virtual void compute_bilateral_kernel(const Blob<Dtype>* const rgb_blob,
       const int n, float* const output_kernel);
-  void init_param_blobs(const MultiStageMeanfieldParameter & meanfield_param);
 
   int count_;
   int num_;
