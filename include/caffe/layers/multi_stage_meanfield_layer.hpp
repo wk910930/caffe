@@ -27,23 +27,18 @@ namespace caffe {
  */
 template <typename Dtype>
 class MultiStageMeanfieldLayer : public Layer<Dtype> {
-
  public:
-  explicit MultiStageMeanfieldLayer(const LayerParameter& param) : Layer<Dtype>(param) {}
-
+  explicit MultiStageMeanfieldLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
-
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
-  virtual inline const char* type() const {
-    return "MultiStageMeanfield";
-  }
-  virtual ~MultiStageMeanfieldLayer();
-  
+  virtual inline const char* type() const { return "MultiStageMeanfield"; }
   virtual inline int ExactNumBottomBlobs() const { return 3; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
+  virtual ~MultiStageMeanfieldLayer();
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
@@ -57,7 +52,8 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
 
  private:
   virtual void compute_spatial_kernel(float* const output_kernel);
-  virtual void compute_bilateral_kernel(const Blob<Dtype>* const rgb_blob, const int n, float* const output_kernel);
+  virtual void compute_bilateral_kernel(const Blob<Dtype>* const rgb_blob,
+      const int n, float* const output_kernel);
   void init_param_blobs(const MultiStageMeanfieldParameter & meanfield_param);
 
   int count_;
@@ -69,7 +65,7 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
 
   bool init_cpu_;
   bool init_gpu_;
-  
+
   Dtype theta_alpha_;
   Dtype theta_beta_;
   Dtype theta_gamma_;
