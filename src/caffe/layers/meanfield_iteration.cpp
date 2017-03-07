@@ -115,7 +115,7 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
     // spatial kernel
     Dtype* spatial_out_data = spatial_out_blob_.mutable_cpu_data() + spatial_out_blob_.offset(n);
     const Dtype* prob_input_data = prob_.cpu_data() + prob_.offset(n);
-    spatial_lattice_->compute(spatial_out_data, prob_input_data, channels_, false);
+    spatial_lattice_->compute_cpu(spatial_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_, spatial_norm_->cpu_data(),
@@ -124,7 +124,7 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
     }
     // bilateral kernel
     Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data() + bilateral_out_blob_.offset(n);
-    (*bilateral_lattices_)[n]->compute(bilateral_out_data, prob_input_data, channels_, false);
+    (*bilateral_lattices_)[n]->compute_cpu(bilateral_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_, bilateral_norms_->cpu_data() + bilateral_norms_->offset(n),
@@ -162,8 +162,6 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
   //---------------------------- Add unary gradient --------------------------
   vector<bool> eltwise_propagate_down(sum_bottom_vec_.size(), true);
   sum_layer_->Backward(sum_top_vec_, eltwise_propagate_down, sum_bottom_vec_);
-
-  caffe_set(prob_.count(), Dtype(0.), prob_.mutable_cpu_diff());
 
   //---------------------------- Update compatibility diffs ------------------
   caffe_set(this->blobs_[2]->count(), Dtype(0.), this->blobs_[2]->mutable_cpu_diff());
