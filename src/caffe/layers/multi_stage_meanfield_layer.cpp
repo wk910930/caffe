@@ -22,12 +22,14 @@
 namespace caffe {
 
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-    const vector<Blob<Dtype>*>& top) {
-  const caffe::MultiStageMeanfieldParameter& meanfield_param = this->layer_param_.multi_stage_meanfield_param();
+void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
+    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+  const caffe::MultiStageMeanfieldParameter& meanfield_param =
+      this->layer_param_.multi_stage_meanfield_param();
 
   num_iterations_ = meanfield_param.num_iterations();
-  CHECK_GT(num_iterations_, 1) << "Number of iterations must be greater than 1.";
+  CHECK_GT(num_iterations_, 1)
+      << "Number of iterations must be greater than 1.";
 
   // bandwidth values of Gaussian kernels
   theta_alpha_ = meanfield_param.theta_alpha();
@@ -45,10 +47,14 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
   num_pixels_ = height_ * width_;
 
   // Check spatial dim between unary term and image
-  CHECK_EQ(num_, bottom[2]->num()) << "num does not match between unary term and image";
-  CHECK_EQ(3, bottom[2]->channels()) << "only support 3-channels image";
-  CHECK_EQ(height_, bottom[2]->height()) << "height does not match between unary term and image";
-  CHECK_EQ(width_, bottom[2]->width()) << "width does not match between unary term and image";
+  CHECK_EQ(num_, bottom[2]->num())
+      << "num does not match between unary term and image";
+  CHECK_EQ(3, bottom[2]->channels())
+      << "only support 3-channels image";
+  CHECK_EQ(height_, bottom[2]->height())
+      << "height does not match between unary term and image";
+  CHECK_EQ(width_, bottom[2]->width())
+      << "width does not match between unary term and image";
 
   init_cpu_ = false;
   init_gpu_ = false;
@@ -65,7 +71,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
   spatial_lattice_.reset(new ModifiedPermutohedral());
   spatial_norm_.Reshape(1, 1, height_, width_);
   // Initialize the spatial lattice.
-  // This does not need to be computed for every image because we use a fixed size.
+  // This does not need to be computed for every image
+  // because we use a fixed size.
   if (Caffe::mode() == Caffe::CPU) {
     init_cpu_ = true;
     spatial_lattice_->init(spatial_kernel, 2, width_, height_);
@@ -103,7 +110,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
   // reshape bilateral
   bilateral_norms_.Reshape(num_, 1, height_, width_);
 
-  // Configure the split layer that is used to make copies of the unary term. One copy for each iteration.
+  // Configure the split layer that is used to make copies of the unary term.
+  // One copy for each iteration.
   // It may be possible to optimize this calculation later.
   split_layer_bottom_vec_.clear();
   split_layer_bottom_vec_.push_back(bottom[0]);
@@ -120,7 +128,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
   split_layer_.reset(new SplitLayer<Dtype>(split_layer_param));
   split_layer_->SetUp(split_layer_bottom_vec_, split_layer_top_vec_);
 
-  // Make blobs to store outputs of each meanfield iteration. Output of the last iteration is stored in top[0].
+  // Make blobs to store outputs of each meanfield iteration.
+  // Output of the last iteration is stored in top[0].
   // So we need only (num_iterations_ - 1) blobs.
   iteration_output_blobs_.resize(num_iterations_ - 1);
   for (int i = 0; i < num_iterations_ - 1; ++i) {
@@ -141,8 +150,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
 }
 
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
-    const vector<Blob<Dtype>*>& top) {
+void MultiStageMeanfieldLayer<Dtype>::Reshape(
+    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   top[0]->Reshape(num_, channels_, height_, width_);
 }
 
@@ -156,8 +165,8 @@ void MultiStageMeanfieldLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom
  * top[0] - Output of the mean field inference (not normalized).
  */
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-    const vector<Blob<Dtype>*>& top) {
+void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
+    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   split_layer_bottom_vec_[0] = bottom[0];
   split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
 
@@ -222,7 +231,8 @@ MultiStageMeanfieldLayer<Dtype>::~MultiStageMeanfieldLayer() {
 }
 
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(const MultiStageMeanfieldParameter& meanfield_param) {
+void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
+    const MultiStageMeanfieldParameter& meanfield_param) {
   // blobs_[0] - spatial kernel weights
   // blobs_[1] - bilateral kernel weights
   // blobs_[2] - compatibility matrix
@@ -247,12 +257,11 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(const MultiStageMeanfield
 }
 
 template<typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(const Blob<Dtype>* const rgb_blob, const int n,
-    float* const output_kernel) {
+void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(
+    const Blob<Dtype>* const rgb_blob, const int n, float* const output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
     output_kernel[5 * p] = static_cast<float>(p % width_) / theta_alpha_;
     output_kernel[5 * p + 1] = static_cast<float>(p / width_) / theta_alpha_;
-
     const Dtype* rgb_data_start = rgb_blob->cpu_data() + rgb_blob->offset(n);
     output_kernel[5 * p + 2] = static_cast<float>(rgb_data_start[p] / theta_beta_);
     output_kernel[5 * p + 3] = static_cast<float>((rgb_data_start + num_pixels_)[p] / theta_beta_);
@@ -261,7 +270,8 @@ void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(const Blob<Dtype>
 }
 
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(float* const output_kernel) {
+void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(
+    float* const output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
     output_kernel[2*p] = static_cast<float>(p % width_) / theta_gamma_;
     output_kernel[2*p + 1] = static_cast<float>(p / width_) / theta_gamma_;
