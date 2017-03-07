@@ -1333,7 +1333,6 @@ message MultiStageMeanfieldParameter {
     POTTS = 0;
   }
   optional Mode compatibility_mode = 1 [default = POTTS];
-  optional float threshold = 2;
 
   required float theta_alpha = 3 [default = 10.];
   required float theta_beta = 4 [default = 10.];
