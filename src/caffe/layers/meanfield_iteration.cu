@@ -150,22 +150,22 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
 
   //--------------------------- Gradient for message passing ---------------
   for (int n = 0; n < num_; ++n) {
-    spatial_lattice_->compute(prob_.mutable_gpu_diff() + prob_.offset(n),
-                              spatial_out_blob_.gpu_diff() + spatial_out_blob_.offset(n), channels_,
-                              true, false);
+    spatial_lattice_->compute_gpu(prob_.mutable_gpu_diff() + prob_.offset(n),
+        spatial_out_blob_.gpu_diff() + spatial_out_blob_.offset(n), channels_, true, false);
 
-    (*bilateral_lattices_)[n]->compute(prob_.mutable_gpu_diff() + prob_.offset(n),
-                                       bilateral_out_blob_.gpu_diff() + bilateral_out_blob_.offset(n),
-                                       channels_, true, true);
+    (*bilateral_lattices_)[n]->compute_gpu(prob_.mutable_gpu_diff() + prob_.offset(n),
+        bilateral_out_blob_.gpu_diff() + bilateral_out_blob_.offset(n), channels_, true, true);
   }
 
   //--------------------------------------------------------------------------------
   vector<bool> propagate_down(2, true);
   softmax_layer_->Backward(softmax_top_vec_, propagate_down, softmax_bottom_vec_);
 }
+
 // Instantiate class
 template void MeanfieldIteration<float>::Forward_gpu();
 template void MeanfieldIteration<double>::Forward_gpu();
 template void MeanfieldIteration<float>::Backward_gpu();
 template void MeanfieldIteration<double>::Backward_gpu();
+
 }  // namespace caffe

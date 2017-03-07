@@ -134,13 +134,13 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
   }
   caffe_set(count_, Dtype(0.), message_passing_.mutable_cpu_data());
   for (int n = 0; n < num_; ++n) {
-    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype)1.,
-        this->blobs_[0]->cpu_data(), spatial_out_blob_.cpu_data() + spatial_out_blob_.offset(n), (Dtype)0.,
+    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_, channels_, Dtype(1.),
+        this->blobs_[0]->cpu_data(), spatial_out_blob_.cpu_data() + spatial_out_blob_.offset(n), Dtype(0.),
         message_passing_.mutable_cpu_data() + message_passing_.offset(n));
   }
   for (int n = 0; n < num_; ++n) {
-    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype)1.,
-        this->blobs_[1]->cpu_data(), bilateral_out_blob_.cpu_data() + bilateral_out_blob_.offset(n), (Dtype)1.,
+    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_, channels_, Dtype(1.),
+        this->blobs_[1]->cpu_data(), bilateral_out_blob_.cpu_data() + bilateral_out_blob_.offset(n), Dtype(1.),
         message_passing_.mutable_cpu_data() + message_passing_.offset(n));
   }
 
@@ -148,8 +148,8 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
   // Result from message passing needs to be multiplied with compatibility values.
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, channels_, num_pixels_,
-        channels_, (Dtype) 1., this->blobs_[2]->cpu_data(),
-        message_passing_.cpu_data() + message_passing_.offset(n), (Dtype) 0.,
+        channels_, Dtype(1.), this->blobs_[2]->cpu_data(),
+        message_passing_.cpu_data() + message_passing_.offset(n), Dtype(0.),
         pairwise_.mutable_cpu_data() + pairwise_.offset(n));
   }
 
@@ -160,24 +160,25 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
 template<typename Dtype>
 void MeanfieldIteration<Dtype>::Backward_cpu() {
   //---------------------------- Add unary gradient --------------------------
-  vector<bool> eltwise_propagate_down(2, true);
+  vector<bool> eltwise_propagate_down(sum_bottom_vec_.size(), true);
   sum_layer_->Backward(sum_top_vec_, eltwise_propagate_down, sum_bottom_vec_);
+
+  caffe_set(prob_.count(), Dtype(0.), prob_.mutable_cpu_diff());
 
   //---------------------------- Update compatibility diffs ------------------
   caffe_set(this->blobs_[2]->count(), Dtype(0.), this->blobs_[2]->mutable_cpu_diff());
-
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, channels_, channels_,
-        num_pixels_, (Dtype) 1., pairwise_.cpu_diff() + pairwise_.offset(n),
-        message_passing_.cpu_data() + message_passing_.offset(n), (Dtype)1.,
+        num_pixels_, Dtype(1.), pairwise_.cpu_diff() + pairwise_.offset(n),
+        message_passing_.cpu_data() + message_passing_.offset(n), Dtype(1.),
         this->blobs_[2]->mutable_cpu_diff());
   }
 
   //-------------------------- Gradient after compatibility transform--- -----
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_, num_pixels_,
-        channels_, (Dtype) 1., this->blobs_[2]->cpu_data(),
-        pairwise_.cpu_diff() + pairwise_.offset(n), (Dtype) 0.,
+        channels_, Dtype(1.), this->blobs_[2]->cpu_data(),
+        pairwise_.cpu_diff() + pairwise_.offset(n), Dtype(0.),
         message_passing_.mutable_cpu_diff() + message_passing_.offset(n));
   }
 
@@ -187,41 +188,41 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
 
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, channels_, channels_,
-        num_pixels_, (Dtype) 1., message_passing_.cpu_diff() + message_passing_.offset(n),
-        spatial_out_blob_.cpu_data() + spatial_out_blob_.offset(n), (Dtype) 1.,
+        num_pixels_, Dtype(1.), message_passing_.cpu_diff() + message_passing_.offset(n),
+        spatial_out_blob_.cpu_data() + spatial_out_blob_.offset(n), Dtype(1.),
         this->blobs_[0]->mutable_cpu_diff());
   }
 
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, channels_, channels_,
-        num_pixels_, (Dtype) 1., message_passing_.cpu_diff() + message_passing_.offset(n),
-        bilateral_out_blob_.cpu_data() + bilateral_out_blob_.offset(n), (Dtype) 1.,
+        num_pixels_, Dtype(1.), message_passing_.cpu_diff() + message_passing_.offset(n),
+        bilateral_out_blob_.cpu_data() + bilateral_out_blob_.offset(n), Dtype(1.),
         this->blobs_[1]->mutable_cpu_diff());
   }
 
   // TODO(author): Check whether there's a way to improve the accuracy of this calculation.
   for (int n = 0; n < num_; ++n) {
-    caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype)1.,
+    caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_, num_pixels_, channels_, Dtype(1.),
         this->blobs_[0]->cpu_data(), message_passing_.cpu_diff() + message_passing_.offset(n),
-        (Dtype)0., spatial_out_blob_.mutable_cpu_diff() + spatial_out_blob_.offset(n));
+        Dtype(0.), spatial_out_blob_.mutable_cpu_diff() + spatial_out_blob_.offset(n));
   }
 
   for (int n = 0; n < num_; ++n) {
-    caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_, num_pixels_, channels_, (Dtype)1.,
+    caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_, num_pixels_, channels_, Dtype(1.),
         this->blobs_[1]->cpu_data(), message_passing_.cpu_diff() + message_passing_.offset(n),
-        (Dtype)0., bilateral_out_blob_.mutable_cpu_diff() + bilateral_out_blob_.offset(n));
+        Dtype(0.), bilateral_out_blob_.mutable_cpu_diff() + bilateral_out_blob_.offset(n));
   }
 
   //---------------------------- BP thru normalization --------------------------
   for (int n = 0; n < num_; ++n) {
-    Dtype *spatial_out_diff = spatial_out_blob_.mutable_cpu_diff() + spatial_out_blob_.offset(n);
+    Dtype* spatial_out_diff = spatial_out_blob_.mutable_cpu_diff() + spatial_out_blob_.offset(n);
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_, spatial_norm_->cpu_data(),
           spatial_out_diff + channel_id * num_pixels_,
           spatial_out_diff + channel_id * num_pixels_);
     }
 
-    Dtype *bilateral_out_diff = bilateral_out_blob_.mutable_cpu_diff() + bilateral_out_blob_.offset(n);
+    Dtype* bilateral_out_diff = bilateral_out_blob_.mutable_cpu_diff() + bilateral_out_blob_.offset(n);
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_, bilateral_norms_->cpu_data() + bilateral_norms_->offset(n),
           bilateral_out_diff + channel_id * num_pixels_,
@@ -231,13 +232,11 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
 
   //--------------------------- Gradient for message passing ---------------
   for (int n = 0; n < num_; ++n) {
-    spatial_lattice_->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
-                              spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n), channels_,
-                              true, false);
+    spatial_lattice_->compute_cpu(prob_.mutable_cpu_diff() + prob_.offset(n),
+        spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n), channels_, true, false);
 
-    (*bilateral_lattices_)[n]->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
-                                       bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n),
-                                       channels_, true, true);
+    (*bilateral_lattices_)[n]->compute_cpu(prob_.mutable_cpu_diff() + prob_.offset(n),
+        bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n), channels_, true, true);
   }
 
   //--------------------------------------------------------------------------------
