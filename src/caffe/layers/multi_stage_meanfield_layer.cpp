@@ -44,6 +44,12 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
   count_ = bottom[0]->count();
   num_pixels_ = height_ * width_;
 
+  // Check spatial dim between unary term and image
+  CHECK_EQ(num_, bottom[2]->num()) << "num does not match between unary term and image";
+  CHECK_EQ(3, bottom[2]->channels()) << "only support 3-channels image";
+  CHECK_EQ(height_, bottom[2]->height()) << "height does not match between unary term and image";
+  CHECK_EQ(width_, bottom[2]->width()) << "width does not match between unary term and image";
+
   init_cpu_ = false;
   init_gpu_ = false;
 
