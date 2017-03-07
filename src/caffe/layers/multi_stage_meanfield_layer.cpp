@@ -228,7 +228,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
   // because we use a fixed size.
   if (Caffe::mode() == Caffe::CPU) {
     init_cpu_ = true;
-    spatial_lattice_->init_cpu(spatial_kernel, 2, num_pixels_);
+    spatial_lattice_->init(spatial_kernel, 2, width_, height_);
     // Calculate spatial filter normalization factors.
     norm_feed_ = new Dtype[num_pixels_];
     caffe_set(num_pixels_, Dtype(1.0), norm_feed_);
@@ -239,7 +239,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
     float* spatial_kernel_gpu;
     CUDA_CHECK(cudaMalloc((void**)&spatial_kernel_gpu, 2*num_pixels_ * sizeof(float)));
     CUDA_CHECK(cudaMemcpy(spatial_kernel_gpu, spatial_kernel, 2*num_pixels_ * sizeof(float), cudaMemcpyHostToDevice));
-    spatial_lattice_->init_gpu(spatial_kernel_gpu, 2, width_, height_);
+    spatial_lattice_->init(spatial_kernel_gpu, 2, width_, height_);
     CUDA_CHECK(cudaFree(spatial_kernel_gpu));
     // Calculate spatial filter normalization factors.
     CUDA_CHECK(cudaMalloc((void**)&norm_feed_, num_pixels_ * sizeof(Dtype)));
