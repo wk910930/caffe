@@ -274,12 +274,12 @@ template<typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(
     const Blob<Dtype>* const rgb_blob, const int n, float* const output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
-    output_kernel[5 * p] = static_cast<float>(p % width_) / theta_alpha_;
+    const Dtype* rgb_data = rgb_blob->cpu_data() + rgb_blob->offset(n);
+    output_kernel[5 * p + 0] = static_cast<float>(p % width_) / theta_alpha_;
     output_kernel[5 * p + 1] = static_cast<float>(p / width_) / theta_alpha_;
-    const Dtype* rgb_data_start = rgb_blob->cpu_data() + rgb_blob->offset(n);
-    output_kernel[5 * p + 2] = static_cast<float>(rgb_data_start[p] / theta_beta_);
-    output_kernel[5 * p + 3] = static_cast<float>((rgb_data_start + num_pixels_)[p] / theta_beta_);
-    output_kernel[5 * p + 4] = static_cast<float>((rgb_data_start + num_pixels_ * 2)[p] / theta_beta_);
+    output_kernel[5 * p + 2] = static_cast<float>((rgb_data + num_pixels_ * 0)[p] / theta_beta_);
+    output_kernel[5 * p + 3] = static_cast<float>((rgb_data + num_pixels_ * 1)[p] / theta_beta_);
+    output_kernel[5 * p + 4] = static_cast<float>((rgb_data + num_pixels_ * 2)[p] / theta_beta_);
   }
 }
 
@@ -287,8 +287,8 @@ template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(
     float* const output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
-    output_kernel[2*p] = static_cast<float>(p % width_) / theta_gamma_;
-    output_kernel[2*p + 1] = static_cast<float>(p / width_) / theta_gamma_;
+    output_kernel[2 * p + 0] = static_cast<float>(p % width_) / theta_gamma_;
+    output_kernel[2 * p + 1] = static_cast<float>(p / width_) / theta_gamma_;
   }
 }
 
