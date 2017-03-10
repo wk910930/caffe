@@ -5,8 +5,8 @@
 
 #include "caffe/blob.hpp"
 #include "caffe/layer.hpp"
-#include "caffe/layers/softmax_layer.hpp"
 #include "caffe/layers/eltwise_layer.hpp"
+#include "caffe/layers/softmax_layer.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/modified_permutohedral.hpp"
 
@@ -60,13 +60,14 @@ class MeanfieldIteration {
    */
   virtual void Backward_cpu();
   virtual void Backward_gpu();
-  
+
   // A quick hack. This should be properly encapsulated.
   vector<shared_ptr<Blob<Dtype> > >& blobs() {
     return blobs_;
   }
 
  protected:
+  /** The vector that stores the learnable parameters as a set of blobs. */
   vector<shared_ptr<Blob<Dtype> > > blobs_;
 
   int count_;

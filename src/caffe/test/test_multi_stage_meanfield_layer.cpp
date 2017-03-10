@@ -15,25 +15,16 @@ namespace caffe {
 template <typename TypeParam>
 class MultiStageMeanfieldLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
-
  protected:
   MultiStageMeanfieldLayerTest() {}
-
-  virtual void SetUp() {
-
-  }
-
-  virtual ~MultiStageMeanfieldLayerTest() {
-
-  }
+  virtual void SetUp() {}
+  virtual ~MultiStageMeanfieldLayerTest() {}
 };
 
 TYPED_TEST_CASE(MultiStageMeanfieldLayerTest, TestDtypesAndDevices);
-
   TYPED_TEST(MultiStageMeanfieldLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   const int n = 5, c = 3, H = 5, W = 5;
-
   if (sizeof(Dtype) != sizeof(float))
     return;
 

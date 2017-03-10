@@ -1,12 +1,13 @@
 #ifndef CAFFE_MODIFIED_PERMUTOHEDRAL_HPP_
 #define CAFFE_MODIFIED_PERMUTOHEDRAL_HPP_
 
-#include <cstdlib>
-#include <vector>
-#include <cstring>
 #include <cassert>
-#include <cstdio>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
+
 #include "caffe/common.hpp"
 #include "caffe/util/device_alternate.hpp"
 #include "caffe/util/hash_table.hpp"
@@ -41,15 +42,19 @@ class ModifiedPermutohedral {
   MatrixEntry *matrix;
   HashTable table;
 
-
-  // Number of elements, size of sparse discretized space, dimension of features width and height
+  // Number of elements, size of sparse discretized space,
+  // dimension of features width and height
   int N_, M_, d_, w_, h_;
 
-  void sseCompute(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
-  void sseCompute(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
+  void sseCompute(float* out, const float* in, int value_size,
+      bool reverse = false, bool add = false) const;
+  void sseCompute(double* out, const double* in, int value_size,
+      bool reverse = false, bool add = false) const;
 
-  void seqCompute(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
-  void seqCompute(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
+  void seqCompute(float* out, const float* in, int value_size,
+      bool reverse = false, bool add = false) const;
+  void seqCompute(double* out, const double* in, int value_size,
+      bool reverse = false, bool add = false) const;
 
  public:
   ModifiedPermutohedral();
@@ -63,11 +68,15 @@ class ModifiedPermutohedral {
   void init_cpu(const float* features, int num_dimensions, int num_points);
   void init_gpu(const float* features, int num_dimensions, int w, int h);
 
-  void compute_cpu(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
-  void compute_cpu(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
+  void compute_cpu(float* out, const float* in, int value_size,
+      bool reverse = false, bool add = false) const;
+  void compute_cpu(double* out, const double* in, int value_size,
+      bool reverse = false, bool add = false) const;
 
-  void compute_gpu(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const;
-  void compute_gpu(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const;
+  void compute_gpu(float* out, const float* in, int value_size,
+      bool reverse = false, bool add = false) const;
+  void compute_gpu(double* out, const double* in, int value_size,
+      bool reverse = false, bool add = false) const;
 
   void init(const float* features, int num_dimensions, int w, int h) {
     switch (Caffe::mode()) {
@@ -84,7 +93,8 @@ class ModifiedPermutohedral {
         LOG(FATAL) << "Unknown caffe mode.";
     }
   }
-  void compute(float* out, const float* in, int value_size, bool reverse = false, bool add = false) const {
+  void compute(float* out, const float* in, int value_size,
+      bool reverse = false, bool add = false) const {
     switch (Caffe::mode()) {
       case Caffe::CPU:
         compute_cpu(out, in, value_size, reverse, add);
@@ -98,7 +108,8 @@ class ModifiedPermutohedral {
         LOG(FATAL) << "Unknown caffe mode.";
     }
   }
-  void compute(double* out, const double* in, int value_size, bool reverse = false, bool add = false) const{
+  void compute(double* out, const double* in, int value_size,
+      bool reverse = false, bool add = false) const{
     switch (Caffe::mode()) {
       case Caffe::CPU:
         compute_cpu(out, in, value_size, reverse, add);
