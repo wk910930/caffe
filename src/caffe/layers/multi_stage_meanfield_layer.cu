@@ -75,7 +75,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bo
     bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, width_, height_);
     // Calculate bilateral filter normalization factors.
     Dtype* norm_output_data = bilateral_norms_.mutable_gpu_data() + bilateral_norms_.offset(n);
-    bilateral_lattices_[n]->compute(norm_output_data, norm_feed_, 1);
+    bilateral_lattices_[n]->compute_gpu(norm_output_data, norm_feed_, 1);
     computeNorm<Dtype><<<CAFFE_GET_BLOCKS(num_pixels_), CAFFE_CUDA_NUM_THREADS>>>(norm_output_data, num_pixels_);
     CUDA_POST_KERNEL_CHECK;
   }

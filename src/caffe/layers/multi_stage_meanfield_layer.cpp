@@ -139,7 +139,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
     bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, width_, height_);
     // Calculate bilateral filter normalization factors.
     Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() + bilateral_norms_.offset(n);
-    bilateral_lattices_[n]->compute(norm_output_data, norm_feed_, 1);
+    bilateral_lattices_[n]->compute_cpu(norm_output_data, norm_feed_, 1);
     for (int i = 0; i < num_pixels_; ++i) {
       norm_output_data[i] = 1.f / (norm_output_data[i] + 1e-20f);
     }
