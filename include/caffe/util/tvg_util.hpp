@@ -8,7 +8,8 @@
 namespace caffe {
 
 template <typename Dtype>
-void PrintBlob(const Blob<Dtype>* blob, bool print_diff = false, const char* info = 0) {
+void PrintBlob(const Blob<Dtype>* blob, bool print_diff = false,
+    const char* info = 0) {
   const Dtype* data = print_diff ? blob->cpu_diff() : blob->cpu_data();
   if (info != 0) {
     printf("%s: \n", info);
@@ -27,32 +28,34 @@ void PrintBlob(const Blob<Dtype>* blob, bool print_diff = false, const char* inf
   }
   printf("-- End of Blob --\n\n");
 }
-template void PrintBlob(const Blob<float>* blob, bool print_diff = false, const char* info = 0);
-template void PrintBlob(const Blob<double>* blob, bool print_diff = false, const char* info = 0);
+template void PrintBlob(const Blob<float>* blob, bool print_diff = false,
+    const char* info = 0);
+template void PrintBlob(const Blob<double>* blob, bool print_diff = false,
+    const char* info = 0);
+
 
 template <typename Dtype>
-void FillWithMax(Blob<Dtype>* blob, float max_value = 1) {
-  srand(2000);
-  for (int i = 0; i < blob->count(); ++i) {
-    blob->mutable_cpu_data()[i] = ((double) rand() / RAND_MAX) * max_value;
+void FillAsRGB(Blob<Dtype>* blob, bool time_seed = false) {
+  if (time_seed) {
+    srand(time(NULL));
+  } else {
+    srand(999);
   }
-}
-template void FillWithMax(Blob<float>* const blob, float max_value = 1);
-template void FillWithMax(Blob<double>* const blob, float max_value = 1);
-
-template <typename Dtype>
-void FillAsRGB(Blob<Dtype>* blob) {
-  srand(2000);
   for (int i = 0; i < blob->count(); ++i) {
     blob->mutable_cpu_data()[i] = rand() % 256;
   }
 }
-template void FillAsRGB(Blob<float>* const blob);
-template void FillAsRGB(Blob<double>* const blob);
+template void FillAsRGB(Blob<float>* const blob, bool time_seed = false);
+template void FillAsRGB(Blob<double>* const blob, bool time_seed = false);
+
 
 template<typename Dtype>
-void FillAsProb(Blob<Dtype>* blob) {
-  srand(1000);  // time(NULL));
+void FillAsProb(Blob<Dtype>* blob, bool time_seed = false) {
+  if (time_seed) {
+    srand(time(NULL));
+  } else {
+    srand(999);
+  }
   for (int i = 0; i < blob->count(); ++i) {
     double num = (double) rand() / (double) RAND_MAX;
     blob->mutable_cpu_data()[i] = static_cast<Dtype>((num != 0) ? num : 0.0002);
@@ -71,8 +74,9 @@ void FillAsProb(Blob<Dtype>* blob) {
     }
   }
 }
-template void FillAsProb(Blob<float>* const blob);
-template void FillAsProb(Blob<double>* const blob);
+template void FillAsProb(Blob<float>* const blobm, bool time_seed = false);
+template void FillAsProb(Blob<double>* const blob, bool time_seed = false);
+
 
 template<typename Dtype>
 void FillAsLogProb(Blob<Dtype>* blob) {
