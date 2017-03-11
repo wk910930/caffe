@@ -14,8 +14,6 @@
  */
 #include <vector>
 
-#include "caffe/filler.hpp"
-#include "caffe/layer.hpp"
 #include "caffe/layers/multi_stage_meanfield_layer.hpp"
 
 namespace caffe {
@@ -58,7 +56,8 @@ template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
   if (init_cpu_) {
-    LOG(FATAL) << ("You initialize your network on CPU, please initialize it on GPU.");
+    this->Forward_cpu(bottom, top);
+    return;
   }
   const Dtype* bottom_data = bottom[2]->gpu_data();
   split_layer_bottom_vec_[0] = bottom[0];
@@ -72,7 +71,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bo
         theta_alpha_, theta_beta_, n, bilateral_kernel_buffer_);
     CUDA_POST_KERNEL_CHECK;
     bilateral_lattices_[n].reset(new ModifiedPermutohedral());
-    bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, width_, height_);
+    bilateral_lattices_[n]->init_gpu(bilateral_kernel_buffer_, 5, width_, height_);
     // Calculate bilateral filter normalization factors.
     Dtype* norm_output_data = bilateral_norms_.mutable_gpu_data() + bilateral_norms_.offset(n);
     bilateral_lattices_[n]->compute_gpu(norm_output_data, norm_feed_, 1);
@@ -93,13 +92,12 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_gpu(
     const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
   if (init_cpu_) {
-    LOG(FATAL) << ("You initialize your network on CPU, please initialize it on GPU.");
+    this->Backward_cpu(bottom, propagate_down, top);
+    return;
   }
-
   for (int i = (num_iterations_ - 1); i >= 0; --i) {
     meanfield_iterations_[i]->Backward_gpu();
   }
-
   vector<bool> split_layer_propagate_down(1, true);
   split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down, split_layer_bottom_vec_);
 

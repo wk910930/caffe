@@ -1334,17 +1334,16 @@ message MultiStageMeanfieldParameter {
   }
   optional Mode compatibility_mode = 1 [default = POTTS];
 
-  required float theta_alpha = 3 [default = 10.];
-  required float theta_beta = 4 [default = 10.];
-  required float theta_gamma = 5 [default = 10.];
+  required float theta_alpha = 2 [default = 10.];
+  required float theta_beta = 3 [default = 10.];
+  required float theta_gamma = 4 [default = 10.];
 
-  required uint32 num_iterations = 6 [default = 1];
+  required uint32 num_iterations = 5 [default = 1];
 
-  optional string spatial_filter_weights_str = 19 [default=""];
-  optional string bilateral_filter_weights_str = 20 [default=""];
+  optional string spatial_filter_weights_str = 6 [default = ""];
+  optional string bilateral_filter_weights_str = 7 [default = ""];
 
-  optional float forced_spatial_filter_weight = 9;
-  optional float forced_bilateral_filter_weight = 10;
+  optional bool force_cpu = 8 [default = false];
 }
 
 message MVNParameter {

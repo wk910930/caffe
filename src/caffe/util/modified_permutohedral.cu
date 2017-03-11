@@ -1,6 +1,7 @@
 #define BLOCK_SIZE 64
 
 #include <stdio.h>
+
 #include "caffe/util/modified_permutohedral.hpp"
 #include "caffe/util/hash_helper.cu"
 #include "caffe/util/math_functions.hpp"
@@ -419,7 +420,7 @@ void gpu_compute(Dtype* out, const Dtype* in, const HashTable &table,
 
 void ModifiedPermutohedral::init_gpu(const float* features, int num_dimensions, int w, int h) {
   // Initialize Hash table
-  if (!is_init) {
+  if (!is_gpu_init_) {
     table.createHashTable(w*h*(num_dimensions+1), num_dimensions);
     CUDA_CHECK(cudaMalloc((void **)&matrix, sizeof(MatrixEntry)*(w*h*(num_dimensions+1))));
   } else {
@@ -439,11 +440,12 @@ void ModifiedPermutohedral::init_gpu(const float* features, int num_dimensions, 
     default:
       LOG(FATAL) << "num_dimensions should be 2 or 5";
   }
+  is_gpu_init_ = true;
 }
 
 void ModifiedPermutohedral::compute_gpu(float* out, const float* in, int value_size, bool reverse, bool add) const {
   // Losing time by dynamically allocating memory but more general function
-  if (!is_init)
+  if (!is_gpu_init_)
     LOG(FATAL) << "Initialize lattice before doing any computing";
   switch (d_) {
     case 2:
@@ -459,7 +461,7 @@ void ModifiedPermutohedral::compute_gpu(float* out, const float* in, int value_s
 
 void ModifiedPermutohedral::compute_gpu(double* out, const double* in, int value_size, bool reverse, bool add) const {
   // Losing time by dynamically allocating memory but more general function
-  if (!is_init)
+  if (!is_gpu_init_)
     LOG(FATAL) << "Initialize lattice before doing any computing";
   switch (d_) {
     case 2:

@@ -98,14 +98,12 @@ public:
 };
 
 /************************************************/
-/***          ModifiedPermutohedral Lattice           ***/
+/***          ModifiedPermutohedral Lattice    ***/
 /************************************************/
 
-ModifiedPermutohedral::ModifiedPermutohedral(): is_init(false), N_( 0 ), M_( 0 ), d_( 0 ) {
-}
+ModifiedPermutohedral::ModifiedPermutohedral(): is_gpu_init_(false), N_(0), M_(0), d_(0) {}
 #ifdef SSE_PERMUTOHEDRAL
-void ModifiedPermutohedral::init_cpu(const float* features, int num_dimensions, int num_points)
-{
+void ModifiedPermutohedral::init_cpu(const float* features, int num_dimensions, int num_points) {
 	// Compute the lattice coordinates for each feature [there is going to be a lot of magic here
 	N_ = num_points;
 	d_ = num_dimensions;
@@ -287,8 +285,7 @@ void ModifiedPermutohedral::init_cpu(const float* features, int num_dimensions, 
 	delete[] n2;
 }
 #else
-void ModifiedPermutohedral::init_cpu(const float* features, int num_dimensions, int num_points)
-{
+void ModifiedPermutohedral::init_cpu(const float* features, int num_dimensions, int num_points) {
 	// Compute the lattice coordinates for each feature [there is going to be a lot of magic here
 	N_ = num_points;
 	d_ = num_dimensions;
@@ -408,8 +405,7 @@ void ModifiedPermutohedral::init_cpu(const float* features, int num_dimensions, 
 	delete [] rank;
 	delete [] canonical;
 	delete [] key;
-	
-	
+
 	// Find the Neighbors of each lattice point
 	
 	// Get the number of vertices in the lattice
@@ -440,11 +436,11 @@ void ModifiedPermutohedral::init_cpu(const float* features, int num_dimensions, 
 	delete[] n2;
 }
 #endif
-void ModifiedPermutohedral::seqCompute(float* out, const float* in, int value_size, bool reverse, bool add) const
-{
-	// Shift all values by 1 such that -1 -> 0 (used for blurring)
-	float * values = new float[ (M_+2)*value_size ];
-	float * new_values = new float[ (M_+2)*value_size ];
+void ModifiedPermutohedral::seqCompute(float* out, const float* in, int value_size,
+    bool reverse, bool add) const {
+  // Shift all values by 1 such that -1 -> 0 (used for blurring)
+  float * values = new float[ (M_+2)*value_size ];
+  float * new_values = new float[ (M_+2)*value_size ];
 	
 	for( int i=0; i<(M_+2)*value_size; i++ )
 		values[i] = new_values[i] = 0;
@@ -490,13 +486,12 @@ void ModifiedPermutohedral::seqCompute(float* out, const float* in, int value_si
 			  out[ i + k*N_ ] += w * values[ o*value_size+k ] * alpha;
 		}
 	}
-	
-	
 	delete[] values;
 	delete[] new_values;
 }
-void ModifiedPermutohedral::seqCompute(double* out, const double* in, int value_size, bool reverse, bool add) const
-{
+
+void ModifiedPermutohedral::seqCompute(double* out, const double* in, int value_size,
+    bool reverse, bool add) const {
   // Shift all values by 1 such that -1 -> 0 (used for blurring)
   float * values = new float[ (M_+2)*value_size ];
   float * new_values = new float[ (M_+2)*value_size ];
@@ -546,14 +541,13 @@ void ModifiedPermutohedral::seqCompute(double* out, const double* in, int value_
     }
   }
 
-
   delete[] values;
   delete[] new_values;
 }
 #ifdef SSE_PERMUTOHEDRAL
-void ModifiedPermutohedral::sseCompute ( float* out, const float* in, int value_size, const bool reverse, const bool add) const
-{
-	const int sse_value_size = (value_size-1)*sizeof(float) / sizeof(__m128) + 1;
+void ModifiedPermutohedral::sseCompute ( float* out, const float* in, int value_size,
+    const bool reverse, const bool add) const {
+  const int sse_value_size = (value_size-1)*sizeof(float) / sizeof(__m128) + 1;
 	// Shift all values by 1 such that -1 -> 0 (used for blurring)
 	__m128 * sse_val    = (__m128*) _mm_malloc( sse_value_size*sizeof(__m128), 16 );
 	__m128 * values     = (__m128*) _mm_malloc( (M_+2)*sse_value_size*sizeof(__m128), 16 );
@@ -631,8 +625,8 @@ void ModifiedPermutohedral::sseCompute ( float* out, const float* in, int value_
 	_mm_free( new_values );
 	delete[] sdp_temp;
 }
-void ModifiedPermutohedral::sseCompute ( double* out, const double* in, int value_size, const bool reverse, const bool add) const
-{
+void ModifiedPermutohedral::sseCompute ( double* out, const double* in, int value_size,
+    const bool reverse, const bool add) const {
   const int sse_value_size = (value_size-1)*sizeof(float) / sizeof(__m128) + 1;
   // Shift all values by 1 such that -1 -> 0 (used for blurring)
   __m128 * sse_val    = (__m128*) _mm_malloc( sse_value_size*sizeof(__m128), 16 );
@@ -650,13 +644,10 @@ void ModifiedPermutohedral::sseCompute ( double* out, const double* in, int valu
 
   // Splatting
   for( int i=0;  i<N_; i++ ){
-
-
     for (int s = 0; s < value_size; s++) {
       sdp_temp[s] = static_cast<float>(in[s*N_ + i]);
     }
     memcpy(sse_val, sdp_temp, value_size*sizeof(float));
-
     for( int j=0; j<=d_; j++ ){
       int o = offset_[i*(d_+1)+j]+1;
       __m128 w = _mm_set1_ps( barycentric_[i*(d_+1)+j] );
@@ -693,7 +684,6 @@ void ModifiedPermutohedral::sseCompute ( double* out, const double* in, int valu
       for( int k=0; k<sse_value_size; k++ )
         sse_val[ k ] += w * values[ o*sse_value_size+k ];
     }
-
     memcpy(sdp_temp, sse_val, value_size*sizeof(float) );
     if (!add) {
       for (int s = 0; s < value_size; s++) {
@@ -705,39 +695,39 @@ void ModifiedPermutohedral::sseCompute ( double* out, const double* in, int valu
       }
     }
   }
-
   _mm_free( sse_val );
   _mm_free( values );
   _mm_free( new_values );
-
   delete[] sdp_temp;
 }
 #else
-void ModifiedPermutohedral::sseCompute( float* out, const float* in, int value_size, bool reverse, bool add) const
-{
-	seqCompute( out, in, value_size, reverse, add);
+void ModifiedPermutohedral::sseCompute(float* out, const float* in, int value_size,
+    bool reverse, bool add) const {
+  seqCompute( out, in, value_size, reverse, add);
 }
-void ModifiedPermutohedral::sseCompute(double* out, const double* in, int value_size, bool reverse, bool add) const
-{
+
+void ModifiedPermutohedral::sseCompute(double* out, const double* in, int value_size,
+    bool reverse, bool add) const {
   seqCompute( out, in, value_size, reverse, add);
 }
 #endif
 
-
-void ModifiedPermutohedral::compute_cpu (float* out, const float* in, int value_size, bool reverse, bool add) const
-{
-	if (value_size <= 2)
-		seqCompute(out, in, value_size, reverse, add);
-	else
-		sseCompute(out, in, value_size, reverse, add);
+void ModifiedPermutohedral::compute_cpu(float* out, const float* in, int value_size,
+    bool reverse, bool add) const {
+  if (value_size <= 2) {
+    seqCompute(out, in, value_size, reverse, add);
+  } else {
+    sseCompute(out, in, value_size, reverse, add);
+  }
 }
 
-void ModifiedPermutohedral::compute_cpu (double* out, const double* in, int value_size, bool reverse, bool add) const
-{
-  if (value_size <= 2)
+void ModifiedPermutohedral::compute_cpu(double* out, const double* in, int value_size,
+    bool reverse, bool add) const {
+  if (value_size <= 2) {
     seqCompute(out, in, value_size, reverse, add);
-  else
+  } else {
     sseCompute(out, in, value_size, reverse, add);
+  }
 }
 
 }
