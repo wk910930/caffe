@@ -38,7 +38,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
 
   num_ = bottom[0]->num();
   if (num_ > 1) {
-    LOG(INFO) << "This implementation has not been tested batch size > 1.";
+    LOG(FATAL) << "This implementation has not been tested batch size > 1.";
   }
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
@@ -67,6 +67,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   }  // parameter initialization
 
   init_spatial_lattice();
+
   // Allocate space for bilateral kernels. This is a temporary buffer used to compute bilateral lattices later.
   // Also allocate space for holding bilateral filter normalization values.
   init_bilateral_buffers();
@@ -76,15 +77,12 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   // It may be possible to optimize this calculation later.
   split_layer_bottom_vec_.clear();
   split_layer_bottom_vec_.push_back(bottom[0]);
-
   split_layer_top_vec_.clear();
-
   split_layer_out_blobs_.resize(num_iterations_);
   for (int i = 0; i < num_iterations_; i++) {
     split_layer_out_blobs_[i].reset(new Blob<Dtype>());
     split_layer_top_vec_.push_back(split_layer_out_blobs_[i].get());
   }
-
   LayerParameter split_layer_param;
   split_layer_.reset(new SplitLayer<Dtype>(split_layer_param));
   split_layer_->SetUp(split_layer_bottom_vec_, split_layer_top_vec_);
@@ -130,7 +128,6 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   split_layer_bottom_vec_[0] = bottom[0];
   split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
-
   // Initialize the bilateral lattices.
   bilateral_lattices_.resize(num_);
   for (int n = 0; n < num_; ++n) {
@@ -160,10 +157,8 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
   for (int i = (num_iterations_ - 1); i >= 0; --i) {
     meanfield_iterations_[i]->Backward_cpu();
   }
-
   vector<bool> split_layer_propagate_down(1, true);
   split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down, split_layer_bottom_vec_);
-
   // Accumulate diffs from mean field iterations.
   for (int blob_id = 0; blob_id < this->blobs_.size(); ++blob_id) {
     Blob<Dtype>* cur_blob = this->blobs_[blob_id].get();
@@ -198,19 +193,15 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
   // blobs_[1] - bilateral kernel weights
   // blobs_[2] - compatibility matrix
   this->blobs_.resize(3);
-
   // Allocate space for kernel weights.
   this->blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   this->blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-
   // Initialize the kernels weights.
   tvg::CommonUtils::read_into_the_diagonal(meanfield_param.spatial_filter_weights_str(), *(this->blobs_[0]));
   tvg::CommonUtils::read_into_the_diagonal(meanfield_param.bilateral_filter_weights_str(), *(this->blobs_[1]));
-
   // Initialize the compatibility matrix.
   this->blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   caffe_set(channels_ * channels_, Dtype(0.), this->blobs_[2]->mutable_cpu_data());
-
   // Initialize it to have the Potts model.
   for (int c = 0; c < channels_; ++c) {
     (this->blobs_[2]->mutable_cpu_data())[c * channels_ + c] = Dtype(-1.);
@@ -237,12 +228,12 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
   } else if (Caffe::mode() == Caffe::GPU) {
     init_gpu_ = true;
     float* spatial_kernel_gpu;
-    CUDA_CHECK(cudaMalloc((void**)&spatial_kernel_gpu, 2*num_pixels_ * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&spatial_kernel_gpu), 2*num_pixels_ * sizeof(float)));
     CUDA_CHECK(cudaMemcpy(spatial_kernel_gpu, spatial_kernel, 2*num_pixels_ * sizeof(float), cudaMemcpyHostToDevice));
     spatial_lattice_->init(spatial_kernel_gpu, 2, width_, height_);
     CUDA_CHECK(cudaFree(spatial_kernel_gpu));
     // Calculate spatial filter normalization factors.
-    CUDA_CHECK(cudaMalloc((void**)&norm_feed_, num_pixels_ * sizeof(Dtype)));
+    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&norm_feed_), num_pixels_ * sizeof(Dtype)));
     caffe_gpu_set(num_pixels_, Dtype(1.0), norm_feed_);
     Dtype* norm_data_gpu = spatial_norm_.mutable_gpu_data();
     spatial_lattice_->compute_gpu(norm_data_gpu, norm_feed_, 1);
@@ -263,7 +254,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_bilateral_buffers() {
   if (init_cpu_) {
     bilateral_kernel_buffer_ = new float[5 * num_pixels_];
   } else if (init_gpu_) {
-    CUDA_CHECK(cudaMalloc((void**)&bilateral_kernel_buffer_, 5 * num_pixels_ * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&bilateral_kernel_buffer_), 5 * num_pixels_ * sizeof(float)));
   } else {
     LOG(FATAL) << "Should not have been able to get here";
   }
