@@ -180,13 +180,13 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
 template<typename Dtype>
 MultiStageMeanfieldLayer<Dtype>::~MultiStageMeanfieldLayer() {
   if (init_cpu_) {
-      delete[] bilateral_kernel_buffer_;
-      delete[] norm_feed_;
+    delete[] bilateral_kernel_buffer_;
+    delete[] norm_feed_;
   }
   #ifndef CPU_ONLY
   if (init_gpu_) {
-      CUDA_CHECK(cudaFree(bilateral_kernel_buffer_));
-      CUDA_CHECK(cudaFree(norm_feed_));
+    CUDA_CHECK(cudaFree(bilateral_kernel_buffer_));
+    CUDA_CHECK(cudaFree(norm_feed_));
   }
   #endif
 }
