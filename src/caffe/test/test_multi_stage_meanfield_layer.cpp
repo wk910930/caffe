@@ -24,9 +24,15 @@ class MultiStageMeanfieldLayerTest : public MultiDeviceTest<TypeParam> {
 TYPED_TEST_CASE(MultiStageMeanfieldLayerTest, TestDtypesAndDevices);
   TYPED_TEST(MultiStageMeanfieldLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
-  const int n = 5, c = 3, H = 5, W = 5;
-  if (sizeof(Dtype) != sizeof(float))
+  if (sizeof(Dtype) != sizeof(float)) {
+    LOG(INFO) << "Dtype does not satisfy requirements.";
     return;
+  }
+
+  int n = 1;
+  int c = 21;
+  int H = 32;
+  int W = 32;
 
   Blob<Dtype> unary_terms_blob(n, c, H, W);
   Blob<Dtype> previous_output_blob(n, c, H, W);
