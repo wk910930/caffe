@@ -38,7 +38,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
 
   num_ = bottom[0]->num();
   if (num_ > 1) {
-    LOG(FATAL) << "This implementation has not been tested batch size > 1.";
+    LOG(INFO) << "This implementation has not been tested batch size > 1.";
   }
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
