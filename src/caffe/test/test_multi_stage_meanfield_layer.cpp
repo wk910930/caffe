@@ -2,7 +2,7 @@
 
 #include "caffe/filler.hpp"
 #include "caffe/layers/multi_stage_meanfield_layer.hpp"
-#include "caffe/util/tvg_util.hpp"
+#include "caffe/util/tvg_common_utils.hpp"
 
 #include "caffe/test/test_caffe_main.hpp"
 #include "caffe/test/test_gradient_check_util.hpp"
