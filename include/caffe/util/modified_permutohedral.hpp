@@ -24,7 +24,11 @@ typedef struct MatrixEntry {
 
 class ModifiedPermutohedral {
  public:
-  ModifiedPermutohedral();
+  ModifiedPermutohedral()
+    : is_gpu_init_(false),
+      N_(0),
+      M_(0),
+      d_(0) {}
   ~ModifiedPermutohedral() {
     #ifndef CPU_ONLY
     if (is_gpu_init_) {
