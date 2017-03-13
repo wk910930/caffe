@@ -1343,7 +1343,10 @@ message MultiStageMeanfieldParameter {
   optional string spatial_filter_weights_str = 6 [default = ""];
   optional string bilateral_filter_weights_str = 7 [default = ""];
 
-  optional bool force_cpu = 8 [default = false];
+  optional uint32 unary_term_weight = 8 [default = 1];
+  optional uint32 pairwise_term_weight = 9 [default = 1];
+
+  optional bool force_cpu = 10 [default = false];
 }
 
 message MVNParameter {

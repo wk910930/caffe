@@ -29,7 +29,8 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
     Blob<Dtype>* const softmax_input,
     Blob<Dtype>* const output_blob,
     const shared_ptr<ModifiedPermutohedral> spatial_lattice,
-    const Blob<Dtype>* const spatial_norm) {
+    const Blob<Dtype>* const spatial_norm,
+    int unary_term_weight, int pairwise_term_weight) {
 
   spatial_lattice_ = spatial_lattice;
   spatial_norm_ = spatial_norm;
@@ -75,8 +76,8 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
   sum_top_vec_.push_back(output_blob);
 
   LayerParameter sum_param;
-  sum_param.mutable_eltwise_param()->add_coeff(Dtype(1.));
-  sum_param.mutable_eltwise_param()->add_coeff(Dtype(-1.));
+  sum_param.mutable_eltwise_param()->add_coeff(Dtype(1.) * unary_term_weight);
+  sum_param.mutable_eltwise_param()->add_coeff(Dtype(-1.) * pairwise_term_weight);
   sum_param.mutable_eltwise_param()->set_operation(EltwiseParameter_EltwiseOp_SUM);
   sum_layer_.reset(new EltwiseLayer<Dtype>(sum_param));
   sum_layer_->SetUp(sum_bottom_vec_, sum_top_vec_);
