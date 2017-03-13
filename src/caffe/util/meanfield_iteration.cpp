@@ -46,9 +46,12 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
     LOG(INFO) << "Meanfield iteration skipping parameter initialization.";
   } else {
     blobs_.resize(3);
-    blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_));  // spatial kernel weight
-    blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_));  // bilateral kernel weight
-    blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));  // compatibility transform matrix
+    // spatial kernel weight
+    blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_));
+    // bilateral kernel weight
+    blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_));
+    // compatibility transform matrix
+    blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   }
 
   pairwise_.Reshape(num_, channels_, height_, width_);
