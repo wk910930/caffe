@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "caffe/blob.hpp"
-#include "caffe/layer.hpp"
 #include "caffe/layers/eltwise_layer.hpp"
 #include "caffe/layers/softmax_layer.hpp"
 #include "caffe/proto/caffe.pb.h"
@@ -50,16 +49,18 @@ class MeanfieldIteration {
       const Blob<Dtype>* const bilateral_norms);
 
   /**
-   * Forward pass - to be called during inference.
+   * CPU Forward/Backward pass
    */
   virtual void Forward_cpu();
-  virtual void Forward_gpu();
-
-  /**
-   * Backward pass - to be called during training.
-   */
   virtual void Backward_cpu();
+
+  #ifndef CPU_ONLY
+  /**
+   * GPU Forward/Backward pass
+   */
+  virtual void Forward_gpu();
   virtual void Backward_gpu();
+  #endif
 
   // A quick hack. This should be properly encapsulated.
   vector<shared_ptr<Blob<Dtype> > >& blobs() {

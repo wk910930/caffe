@@ -5,9 +5,9 @@
 
 #include "caffe/blob.hpp"
 #include "caffe/layer.hpp"
-#include "caffe/layers/meanfield_iteration.hpp"
 #include "caffe/layers/split_layer.hpp"
 #include "caffe/proto/caffe.pb.h"
+#include "caffe/util/meanfield_iteration.hpp"
 
 namespace caffe {
 

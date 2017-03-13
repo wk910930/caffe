@@ -230,6 +230,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
     Dtype* norm_data = spatial_norm_.mutable_cpu_data();
     spatial_lattice_->compute_cpu(norm_data, norm_feed_, 1);
   } else if (Caffe::mode() == Caffe::GPU) {
+    #ifndef CPU_ONLY
     init_gpu_ = true;
     float* spatial_kernel_gpu;
     CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&spatial_kernel_gpu), 2*num_pixels_ * sizeof(float)));
@@ -241,6 +242,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
     caffe_gpu_set(num_pixels_, Dtype(1.0), norm_feed_);
     Dtype* norm_data_gpu = spatial_norm_.mutable_gpu_data();
     spatial_lattice_->compute_gpu(norm_data_gpu, norm_feed_, 1);
+    #endif
   } else {
     LOG(FATAL) << "Unknown caffe mode.";
   }
@@ -258,7 +260,9 @@ void MultiStageMeanfieldLayer<Dtype>::init_bilateral_buffers() {
   if (init_cpu_) {
     bilateral_kernel_buffer_ = new float[5 * num_pixels_];
   } else if (init_gpu_) {
+    #ifndef CPU_ONLY
     CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&bilateral_kernel_buffer_), 5 * num_pixels_ * sizeof(float)));
+    #endif
   } else {
     LOG(FATAL) << "Should not have been able to get here";
   }
@@ -286,6 +290,10 @@ void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(
     output_kernel[2 * p + 1] = static_cast<float>(p / width_) / theta_gamma_;
   }
 }
+
+#ifdef CPU_ONLY
+STUB_GPU(MultiStageMeanfieldLayer);
+#endif
 
 INSTANTIATE_CLASS(MultiStageMeanfieldLayer);
 REGISTER_LAYER_CLASS(MultiStageMeanfield);

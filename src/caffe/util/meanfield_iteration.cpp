@@ -16,9 +16,7 @@
  */
 #include <vector>
 
-#include "caffe/filler.hpp"
-#include "caffe/layer.hpp"
-#include "caffe/layers/meanfield_iteration.hpp"
+#include "caffe/util/meanfield_iteration.hpp"
 
 namespace caffe {
 

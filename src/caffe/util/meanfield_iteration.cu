@@ -16,9 +16,7 @@
  */
 #include <vector>
 
-#include "caffe/filler.hpp"
-#include "caffe/layer.hpp"
-#include "caffe/layers/meanfield_iteration.hpp"
+#include "caffe/util/meanfield_iteration.hpp"
 
 namespace caffe {
 
@@ -32,6 +30,7 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
 
   //-----------------------------------Message passing-----------------------
   for (int n = 0; n < num_; ++n) {
+    // spatial kernel
     Dtype* spatial_out_data = spatial_out_blob_.mutable_gpu_data() + spatial_out_blob_.offset(n);
     const Dtype* prob_input_data = prob_.gpu_data() + prob_.offset(n);
     spatial_lattice_->compute_gpu(spatial_out_data, prob_input_data, channels_, false);
