@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <utility>
 
 #include "caffe/util/hash_table_copy.hpp"
@@ -593,7 +594,7 @@ void ModifiedPermutohedral::sseCompute(double* out, const double* in, int value_
     for (int j = 0; j <= d_; j++) {
       int o = offset_[i*(d_+1)+j]+1;
       __m128 w = _mm_set1_ps(barycentric_[i*(d_+1)+j]);
-      for (int k=0; k < sse_value_size; k++) {
+      for (int k = 0; k < sse_value_size; k++) {
         values[o*sse_value_size+k] += w * sse_val[k];
       }
     }
@@ -626,7 +627,7 @@ void ModifiedPermutohedral::sseCompute(double* out, const double* in, int value_
     for (int j = 0; j <= d_; j++) {
       int o = offset_[i*(d_+1)+j]+1;
       __m128 w = _mm_set1_ps(barycentric_[i*(d_+1)+j] * alpha);
-      for (int k=0; k < sse_value_size; k++) {
+      for (int k = 0; k < sse_value_size; k++) {
         sse_val[k] += w * values[ o*sse_value_size+k];
       }
     }
