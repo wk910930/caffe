@@ -18,65 +18,24 @@
 
 namespace caffe {
 
-// Avoid divergence by uncoalescing access
 template <typename Dtype>
-__global__ void  computeBilateralKernel(const  int num_pixels_,
-    const Dtype* const rgb_blob,
-    const int width_, const int height_, const int channels_,
-    float theta_alpha_, float theta_beta_,
-    const int n, float* const output_kernel) {
-  int offset = ((n * channels_) * height_) * width_;
-  CUDA_KERNEL_LOOP(p, num_pixels_) {
-    output_kernel[5 * p] = (float)(p % width_) / theta_alpha_;
-    output_kernel[5 * p + 1] = (float)(p / width_) / theta_alpha_;
-    const Dtype * const rgb_data_start = rgb_blob + offset;
-    output_kernel[5 * p + 2] = (float)(rgb_data_start[p] / theta_beta_);
-    output_kernel[5 * p + 3] = (float)((rgb_data_start + num_pixels_)[p] / theta_beta_);
-    output_kernel[5 * p + 4] = (float)((rgb_data_start + num_pixels_ * 2)[p] / theta_beta_);
-  }
-}
-
-template <typename Dtype>
-__global__ void computeNorm(Dtype* norm_output_data, int num_pixels) {
-  CUDA_KERNEL_LOOP(i, num_pixels) {
-    norm_output_data[i] = 1.f / (norm_output_data[i] + 1e-20f);
-  }
-}
-
-/**
- * Performs filter-based mean field inference given the image and unary.
- *
- * bottom[0] - Unary terms
- * bottom[1] - Softmax input/Output from the previous iteration (a copy of the unary terms if this is the first stage).
- * bottom[2] - RGB images
- *
- * top[0] - Output of the mean field inference (not normalized).
- */
-template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
-    const vector<Blob<Dtype>*>& top) {
-  if (init_cpu_) {
-    this->Forward_cpu(bottom, top);
-    return;
-  }
-  const Dtype* bottom_data = bottom[2]->gpu_data();
+void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(
+    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   split_layer_bottom_vec_[0] = bottom[0];
   split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
-
   // Initialize the bilateral lattices.
   bilateral_lattices_.resize(num_);
   for (int n = 0; n < num_; ++n) {
-    computeBilateralKernel<Dtype><<<CAFFE_GET_BLOCKS(num_pixels_), CAFFE_CUDA_NUM_THREADS>>>(
-        num_pixels_, bottom_data, width_, height_, channels_,
-        theta_alpha_, theta_beta_, n, bilateral_kernel_buffer_);
-    CUDA_POST_KERNEL_CHECK;
-    bilateral_lattices_[n].reset(new ModifiedPermutohedral());
-    bilateral_lattices_[n]->init_gpu(bilateral_kernel_buffer_, 5, width_, height_);
+    const Dtype* rgb_data = bottom[2]->cpu_data() + bottom[2]->offset(n);
+    compute_bilateral_kernel(rgb_data, n, bilateral_kernel_buffer_);
+    bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
+    bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, num_pixels_);
     // Calculate bilateral filter normalization factors.
-    Dtype* norm_output_data = bilateral_norms_.mutable_gpu_data() + bilateral_norms_.offset(n);
-    bilateral_lattices_[n]->compute_gpu(norm_output_data, norm_feed_, 1);
-    computeNorm<Dtype><<<CAFFE_GET_BLOCKS(num_pixels_), CAFFE_CUDA_NUM_THREADS>>>(norm_output_data, num_pixels_);
-    CUDA_POST_KERNEL_CHECK;
+    Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() + bilateral_norms_.offset(n);
+    bilateral_lattices_[n]->compute(norm_output_data, norm_feed_, 1);
+    for (int i = 0; i < num_pixels_; ++i) {
+      norm_output_data[i] = 1.f / (norm_output_data[i] + 1e-20f);
+    }
   }
   for (int i = 0; i < num_iterations_; ++i) {
     meanfield_iterations_[i]->PrePass(this->blobs_, &bilateral_lattices_, &bilateral_norms_);
@@ -84,23 +43,15 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bo
   }
 }
 
-/**
- * Backprop through filter-based mean field inference.
- */
 template<typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Backward_gpu(
     const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
-  if (init_cpu_) {
-    this->Backward_cpu(bottom, propagate_down, top);
-    return;
-  }
   for (int i = (num_iterations_ - 1); i >= 0; --i) {
     meanfield_iterations_[i]->Backward_gpu();
   }
   vector<bool> split_layer_propagate_down(1, true);
   split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down, split_layer_bottom_vec_);
-
   // Accumulate diffs from mean field iterations.
   for (int blob_id = 0; blob_id < this->blobs_.size(); ++blob_id) {
     Blob<Dtype>* cur_blob = this->blobs_[blob_id].get();

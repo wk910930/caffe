@@ -31,9 +31,10 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
   //-----------------------------------Message passing-----------------------
   for (int n = 0; n < num_; ++n) {
     // spatial kernel
+    Dtype* spatial_out_cpu_data = spatial_out_blob_.mutable_cpu_data() + spatial_out_blob_.offset(n);
+    const Dtype* prob_input_data = prob_.cpu_data() + prob_.offset(n);
+    spatial_lattice_->compute(spatial_out_cpu_data, prob_input_data, channels_, false);
     Dtype* spatial_out_data = spatial_out_blob_.mutable_gpu_data() + spatial_out_blob_.offset(n);
-    const Dtype* prob_input_data = prob_.gpu_data() + prob_.offset(n);
-    spatial_lattice_->compute_gpu(spatial_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_gpu_mul(num_pixels_, spatial_norm_->gpu_data(),
@@ -41,8 +42,9 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
           spatial_out_data + channel_id * num_pixels_);
     }
     // bilateral kernel
+    Dtype* bilateral_out_cpu_data = bilateral_out_blob_.mutable_cpu_data() + bilateral_out_blob_.offset(n);
+    (*bilateral_lattices_)[n]->compute(bilateral_out_cpu_data, prob_input_data, channels_, false);
     Dtype* bilateral_out_data = bilateral_out_blob_.mutable_gpu_data() + bilateral_out_blob_.offset(n);
-    (*bilateral_lattices_)[n]->compute_gpu(bilateral_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_gpu_mul(num_pixels_, bilateral_norms_->gpu_data() + bilateral_norms_->offset(n),
@@ -148,11 +150,11 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
 
   //--------------------------- Gradient for message passing ---------------
   for (int n = 0; n < num_; ++n) {
-    spatial_lattice_->compute_gpu(prob_.mutable_gpu_diff() + prob_.offset(n),
-        spatial_out_blob_.gpu_diff() + spatial_out_blob_.offset(n), channels_, true, false);
+    spatial_lattice_->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
+        spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n), channels_, true, false);
 
-    (*bilateral_lattices_)[n]->compute_gpu(prob_.mutable_gpu_diff() + prob_.offset(n),
-        bilateral_out_blob_.gpu_diff() + bilateral_out_blob_.offset(n), channels_, true, true);
+    (*bilateral_lattices_)[n]->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
+        bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n), channels_, true, true);
   }
 
   //--------------------------------------------------------------------------------

@@ -28,7 +28,7 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
     Blob<Dtype>* const unary_terms,
     Blob<Dtype>* const softmax_input,
     Blob<Dtype>* const output_blob,
-    const shared_ptr<ModifiedPermutohedral> spatial_lattice,
+    const shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice,
     const Blob<Dtype>* const spatial_norm,
     int unary_term_weight, int pairwise_term_weight) {
 
@@ -92,7 +92,7 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::PrePass(
     const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
-    const vector<shared_ptr<ModifiedPermutohedral> >* const bilateral_lattices,
+    const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >* const bilateral_lattices,
     const Blob<Dtype>* const bilateral_norms) {
 
   bilateral_lattices_ = bilateral_lattices;
@@ -117,7 +117,7 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
     // spatial kernel
     Dtype* spatial_out_data = spatial_out_blob_.mutable_cpu_data() + spatial_out_blob_.offset(n);
     const Dtype* prob_input_data = prob_.cpu_data() + prob_.offset(n);
-    spatial_lattice_->compute_cpu(spatial_out_data, prob_input_data, channels_, false);
+    spatial_lattice_->compute(spatial_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_, spatial_norm_->cpu_data(),
@@ -126,7 +126,7 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
     }
     // bilateral kernel
     Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data() + bilateral_out_blob_.offset(n);
-    (*bilateral_lattices_)[n]->compute_cpu(bilateral_out_data, prob_input_data, channels_, false);
+    (*bilateral_lattices_)[n]->compute(bilateral_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_, bilateral_norms_->cpu_data() + bilateral_norms_->offset(n),
@@ -232,10 +232,10 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
 
   //--------------------------- Gradient for message passing ---------------
   for (int n = 0; n < num_; ++n) {
-    spatial_lattice_->compute_cpu(prob_.mutable_cpu_diff() + prob_.offset(n),
+    spatial_lattice_->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
         spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n), channels_, true, false);
 
-    (*bilateral_lattices_)[n]->compute_cpu(prob_.mutable_cpu_diff() + prob_.offset(n),
+    (*bilateral_lattices_)[n]->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
         bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n), channels_, true, true);
   }
 

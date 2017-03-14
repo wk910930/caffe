@@ -38,7 +38,10 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   virtual inline const char* type() const { return "MultiStageMeanfield"; }
   virtual inline int ExactNumBottomBlobs() const { return 3; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
-  virtual ~MultiStageMeanfieldLayer();
+  virtual ~MultiStageMeanfieldLayer() {
+    delete[] bilateral_kernel_buffer_;
+    delete[] norm_feed_;
+  }
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
@@ -54,9 +57,8 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   void init_param_blobs(const MultiStageMeanfieldParameter & meanfield_param);
   void init_spatial_lattice();
   void init_bilateral_buffers();
-  virtual void compute_spatial_kernel(float* const output_kernel);
-  virtual void compute_bilateral_kernel(const Blob<Dtype>* const rgb_blob,
-      const int n, float* const output_kernel);
+  virtual void compute_spatial_kernel(Dtype* output_kernel);
+  virtual void compute_bilateral_kernel(const Dtype* rgb_data, int n, Dtype* output_kernel);
 
   int count_;
   int num_;
@@ -64,9 +66,6 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   int height_;
   int width_;
   int num_pixels_;
-
-  bool init_cpu_;
-  bool init_gpu_;
 
   Dtype theta_alpha_;
   Dtype theta_beta_;
@@ -85,9 +84,9 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
 
   shared_ptr<SplitLayer<Dtype> > split_layer_;
 
-  shared_ptr<ModifiedPermutohedral> spatial_lattice_;
-  float* bilateral_kernel_buffer_;
-  vector<shared_ptr<ModifiedPermutohedral> > bilateral_lattices_;
+  shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice_;
+  Dtype* bilateral_kernel_buffer_;
+  vector<shared_ptr<ModifiedPermutohedral<Dtype> > > bilateral_lattices_;
 };
 
 }  // namespace caffe

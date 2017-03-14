@@ -56,9 +56,6 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   CHECK_EQ(width_, bottom[2]->width())
       << "width does not match between unary term and image";
 
-  init_cpu_ = false;
-  init_gpu_ = false;
-
   // Check if we need to set up the weights
   if (this->blobs_.size() > 0) {
     LOG(INFO) << "Skipping parameter initialization";
@@ -133,12 +130,13 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
   // Initialize the bilateral lattices.
   bilateral_lattices_.resize(num_);
   for (int n = 0; n < num_; ++n) {
-    compute_bilateral_kernel(bottom[2], n, bilateral_kernel_buffer_);
-    bilateral_lattices_[n].reset(new ModifiedPermutohedral());
-    bilateral_lattices_[n]->init_cpu(bilateral_kernel_buffer_, 5, num_pixels_);
+    const Dtype* rgb_data = bottom[2]->cpu_data() + bottom[2]->offset(n);
+    compute_bilateral_kernel(rgb_data, n, bilateral_kernel_buffer_);
+    bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
+    bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, num_pixels_);
     // Calculate bilateral filter normalization factors.
     Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() + bilateral_norms_.offset(n);
-    bilateral_lattices_[n]->compute_cpu(norm_output_data, norm_feed_, 1);
+    bilateral_lattices_[n]->compute(norm_output_data, norm_feed_, 1);
     for (int i = 0; i < num_pixels_; ++i) {
       norm_output_data[i] = 1.f / (norm_output_data[i] + 1e-20f);
     }
@@ -149,10 +147,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
   }
 }
 
-/**
- * Backprop through filter-based mean field inference.
- */
-template<typename Dtype>
+template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
     const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
@@ -172,20 +167,6 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
       }
     }
   }
-}
-
-template<typename Dtype>
-MultiStageMeanfieldLayer<Dtype>::~MultiStageMeanfieldLayer() {
-  if (init_cpu_) {
-    delete[] bilateral_kernel_buffer_;
-    delete[] norm_feed_;
-  }
-  #ifndef CPU_ONLY
-  if (init_gpu_) {
-    CUDA_CHECK(cudaFree(bilateral_kernel_buffer_));
-    CUDA_CHECK(cudaFree(norm_feed_));
-  }
-  #endif
 }
 
 template <typename Dtype>
@@ -212,84 +193,54 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
-  float* spatial_kernel = new float[2 * num_pixels_];
-  compute_spatial_kernel(spatial_kernel);
-  spatial_lattice_.reset(new ModifiedPermutohedral());
-  spatial_norm_.Reshape(1, 1, height_, width_);
   // Initialize the spatial lattice.
   // This does not need to be computed for every image
   // because we use a fixed size.
-  bool force_cpu = this->layer_param_.multi_stage_meanfield_param().force_cpu();
-  if (force_cpu) {
-    LOG(INFO) << "Force CPU initialization.";
-  }
-  if (Caffe::mode() == Caffe::CPU || force_cpu) {
-    init_cpu_ = true;
-    spatial_lattice_->init_cpu(spatial_kernel, 2, num_pixels_);
-    // Calculate spatial filter normalization factors.
-    norm_feed_ = new Dtype[num_pixels_];
-    caffe_set(num_pixels_, Dtype(1.0), norm_feed_);
-    Dtype* norm_data = spatial_norm_.mutable_cpu_data();
-    spatial_lattice_->compute_cpu(norm_data, norm_feed_, 1);
-  } else if (Caffe::mode() == Caffe::GPU) {
-    #ifndef CPU_ONLY
-    init_gpu_ = true;
-    float* spatial_kernel_gpu;
-    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&spatial_kernel_gpu), 2*num_pixels_ * sizeof(float)));
-    CUDA_CHECK(cudaMemcpy(spatial_kernel_gpu, spatial_kernel, 2*num_pixels_ * sizeof(float), cudaMemcpyHostToDevice));
-    spatial_lattice_->init_gpu(spatial_kernel_gpu, 2, width_, height_);
-    CUDA_CHECK(cudaFree(spatial_kernel_gpu));
-    // Calculate spatial filter normalization factors.
-    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&norm_feed_), num_pixels_ * sizeof(Dtype)));
-    caffe_gpu_set(num_pixels_, Dtype(1.0), norm_feed_);
-    Dtype* norm_data_gpu = spatial_norm_.mutable_gpu_data();
-    spatial_lattice_->compute_gpu(norm_data_gpu, norm_feed_, 1);
-    #endif
-  } else {
-    LOG(FATAL) << "Unknown caffe mode.";
-  }
-  delete[] spatial_kernel;
+  Dtype* spatial_kernel = new Dtype[2 * num_pixels_];
+  compute_spatial_kernel(spatial_kernel);
+
+  spatial_norm_.Reshape(1, 1, height_, width_);
+  Dtype* norm_data = spatial_norm_.mutable_cpu_data();
+
+  // Calculate spatial filter normalization factors.
+  norm_feed_ = new Dtype[num_pixels_];
+  caffe_set(num_pixels_, Dtype(1.0), norm_feed_);
+
+  spatial_lattice_.reset(new ModifiedPermutohedral<Dtype>());
+  spatial_lattice_->init(spatial_kernel, 2, num_pixels_);
+  spatial_lattice_->compute(norm_data, norm_feed_, 1);
+
   // This value has been computed either on the GPU or CPU.
   // May be more efficient to just do everything on CPU.
-  Dtype* norm_data = spatial_norm_.mutable_cpu_data();
   for (int i = 0; i < num_pixels_; ++i) {
     norm_data[i] = 1.0f / (norm_data[i] + 1e-20f);
   }
+  delete[] spatial_kernel;
 }
 
-template<typename Dtype>
+template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::init_bilateral_buffers() {
-  if (init_cpu_) {
-    bilateral_kernel_buffer_ = new float[5 * num_pixels_];
-  } else if (init_gpu_) {
-    #ifndef CPU_ONLY
-    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&bilateral_kernel_buffer_), 5 * num_pixels_ * sizeof(float)));
-    #endif
-  } else {
-    LOG(FATAL) << "Should not have been able to get here";
-  }
+  bilateral_kernel_buffer_ = new Dtype[5 * num_pixels_];
   bilateral_norms_.Reshape(num_, 1, height_, width_);
 }
 
-template<typename Dtype>
+template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(
-    const Blob<Dtype>* const rgb_blob, const int n, float* const output_kernel) {
+    const Dtype* rgb_data, int n, Dtype* output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
-    const Dtype* rgb_data = rgb_blob->cpu_data() + rgb_blob->offset(n);
-    output_kernel[5 * p + 0] = static_cast<float>(p % width_) / theta_alpha_;
-    output_kernel[5 * p + 1] = static_cast<float>(p / width_) / theta_alpha_;
-    output_kernel[5 * p + 2] = static_cast<float>((rgb_data + num_pixels_ * 0)[p] / theta_beta_);
-    output_kernel[5 * p + 3] = static_cast<float>((rgb_data + num_pixels_ * 1)[p] / theta_beta_);
-    output_kernel[5 * p + 4] = static_cast<float>((rgb_data + num_pixels_ * 2)[p] / theta_beta_);
+    output_kernel[5 * p + 0] = static_cast<Dtype>(p % width_) / theta_alpha_;
+    output_kernel[5 * p + 1] = static_cast<Dtype>(p / width_) / theta_alpha_;
+    output_kernel[5 * p + 2] = static_cast<Dtype>((rgb_data + num_pixels_ * 0)[p] / theta_beta_);
+    output_kernel[5 * p + 3] = static_cast<Dtype>((rgb_data + num_pixels_ * 1)[p] / theta_beta_);
+    output_kernel[5 * p + 4] = static_cast<Dtype>((rgb_data + num_pixels_ * 2)[p] / theta_beta_);
   }
 }
 
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(
-    float* const output_kernel) {
+void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(Dtype* output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
-    output_kernel[2 * p + 0] = static_cast<float>(p % width_) / theta_gamma_;
-    output_kernel[2 * p + 1] = static_cast<float>(p / width_) / theta_gamma_;
+    output_kernel[2 * p + 0] = static_cast<Dtype>(p % width_) / theta_gamma_;
+    output_kernel[2 * p + 1] = static_cast<Dtype>(p / width_) / theta_gamma_;
   }
 }
 

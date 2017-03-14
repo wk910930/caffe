@@ -37,7 +37,7 @@ class MeanfieldIteration {
       Blob<Dtype>* const unary_terms,
       Blob<Dtype>* const softmax_input,
       Blob<Dtype>* const output_blob,
-      const shared_ptr<ModifiedPermutohedral> spatial_lattice,
+      const shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice,
       const Blob<Dtype>* const spatial_norm,
       int unary_term_weight, int pairwise_term_weight);
 
@@ -46,7 +46,7 @@ class MeanfieldIteration {
    */
   virtual void PrePass(
       const vector<shared_ptr<Blob<Dtype> > >&  parameters_to_copy_from,
-      const vector<shared_ptr<ModifiedPermutohedral> >* const bilateral_lattices,
+      const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >* const bilateral_lattices,
       const Blob<Dtype>* const bilateral_norms);
 
   /**
@@ -94,8 +94,8 @@ class MeanfieldIteration {
   shared_ptr<SoftmaxLayer<Dtype> > softmax_layer_;
   shared_ptr<EltwiseLayer<Dtype> > sum_layer_;
 
-  shared_ptr<ModifiedPermutohedral> spatial_lattice_;
-  const vector<shared_ptr<ModifiedPermutohedral> >* bilateral_lattices_;
+  shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice_;
+  const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >* bilateral_lattices_;
 
   const Blob<Dtype>* spatial_norm_;
   const Blob<Dtype>* bilateral_norms_;
