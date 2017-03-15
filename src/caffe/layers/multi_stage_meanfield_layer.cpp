@@ -100,7 +100,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
         (i == 0) ? bottom[1] : iteration_output_blobs_[i - 1].get(),  // softmax input
         (i == num_iterations_ - 1) ? top[0] : iteration_output_blobs_[i].get(),  // output blob
         spatial_lattice_,  // spatial lattice
-        &spatial_norm_,  // spatial normalization factors
+        spatial_norm_,  // spatial normalization factors
         meanfield_param.unary_term_weight(),
         meanfield_param.pairwise_term_weight());
   }
@@ -142,7 +142,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
     }
   }
   for (int i = 0; i < num_iterations_; ++i) {
-    meanfield_iterations_[i]->PrePass(this->blobs_, &bilateral_lattices_, &bilateral_norms_);
+    meanfield_iterations_[i]->PrePass(this->blobs_, bilateral_lattices_, bilateral_norms_);
     meanfield_iterations_[i]->Forward_cpu();
   }
 }

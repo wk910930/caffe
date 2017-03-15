@@ -82,7 +82,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     // Find the simplex we are in and store it in rank
     // (where rank describes what position coordinate i
     // has in the sorted order of the features values)
-    for (int i=0; i <= d_; i++) {
+    for (int i = 0; i <= d_; i++) {
       rank[i] = 0;
     }
     for (int i = 0; i < d_; i++) {

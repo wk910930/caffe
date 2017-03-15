@@ -25,16 +25,12 @@ namespace caffe {
  */
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::OneTimeSetUp(
-    Blob<Dtype>* const unary_terms,
-    Blob<Dtype>* const softmax_input,
-    Blob<Dtype>* const output_blob,
-    const shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice,
-    const Blob<Dtype>* const spatial_norm,
+    Blob<Dtype>* unary_terms,
+    Blob<Dtype>* softmax_input,
+    Blob<Dtype>* output_blob,
+    const shared_ptr<ModifiedPermutohedral<Dtype> >& spatial_lattice,
+    const Blob<Dtype>& spatial_norm,
     int unary_term_weight, int pairwise_term_weight) {
-
-  spatial_lattice_ = spatial_lattice;
-  spatial_norm_ = spatial_norm;
-
   count_ = unary_terms->count();
   num_ = unary_terms->num();
   channels_ = unary_terms->channels();
@@ -59,31 +55,30 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
   bilateral_out_blob_.Reshape(num_, channels_, height_, width_);
   message_passing_.Reshape(num_, channels_, height_, width_);
 
-  // Softmax layer configuration
-  softmax_bottom_vec_.clear();
-  softmax_bottom_vec_.push_back(softmax_input);
-
-  softmax_top_vec_.clear();
-  softmax_top_vec_.push_back(&prob_);
-
-  LayerParameter softmax_param;
-  softmax_layer_.reset(new SoftmaxLayer<Dtype>(softmax_param));
-  softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
-
-  // Sum layer configuration
+  // Addition configuration
   sum_bottom_vec_.clear();
   sum_bottom_vec_.push_back(unary_terms);
   sum_bottom_vec_.push_back(&pairwise_);
-
   sum_top_vec_.clear();
   sum_top_vec_.push_back(output_blob);
-
   LayerParameter sum_param;
   sum_param.mutable_eltwise_param()->add_coeff(Dtype(1.) * unary_term_weight);
   sum_param.mutable_eltwise_param()->add_coeff(Dtype(-1.) * pairwise_term_weight);
   sum_param.mutable_eltwise_param()->set_operation(EltwiseParameter_EltwiseOp_SUM);
   sum_layer_.reset(new EltwiseLayer<Dtype>(sum_param));
   sum_layer_->SetUp(sum_bottom_vec_, sum_top_vec_);
+
+  // Normalization configuration
+  softmax_bottom_vec_.clear();
+  softmax_bottom_vec_.push_back(softmax_input);
+  softmax_top_vec_.clear();
+  softmax_top_vec_.push_back(&prob_);
+  LayerParameter softmax_param;
+  softmax_layer_.reset(new SoftmaxLayer<Dtype>(softmax_param));
+  softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
+
+  spatial_lattice_ = spatial_lattice;
+  spatial_norm_.CopyFrom(spatial_norm, false, true);
 }
 
 /**
@@ -92,11 +87,11 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::PrePass(
     const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
-    const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >* const bilateral_lattices,
-    const Blob<Dtype>* const bilateral_norms) {
+    const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >& bilateral_lattices,
+    const Blob<Dtype>& bilateral_norms) {
 
   bilateral_lattices_ = bilateral_lattices;
-  bilateral_norms_ = bilateral_norms;
+  bilateral_norms_.CopyFrom(bilateral_norms, false, true);
 
   // Get copies of the up-to-date parameters.
   for (int i = 0; i < parameters_to_copy_from.size(); ++i) {
@@ -120,16 +115,16 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
     spatial_lattice_->compute(spatial_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_mul(num_pixels_, spatial_norm_->cpu_data(),
+      caffe_mul(num_pixels_, spatial_norm_.cpu_data(),
           spatial_out_data + channel_id * num_pixels_,
           spatial_out_data + channel_id * num_pixels_);
     }
     // bilateral kernel
     Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data() + bilateral_out_blob_.offset(n);
-    (*bilateral_lattices_)[n]->compute(bilateral_out_data, prob_input_data, channels_, false);
+    bilateral_lattices_[n]->compute(bilateral_out_data, prob_input_data, channels_, false);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_mul(num_pixels_, bilateral_norms_->cpu_data() + bilateral_norms_->offset(n),
+      caffe_mul(num_pixels_, bilateral_norms_.cpu_data() + bilateral_norms_.offset(n),
           bilateral_out_data + channel_id * num_pixels_,
           bilateral_out_data + channel_id * num_pixels_);
     }
@@ -217,14 +212,14 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
   for (int n = 0; n < num_; ++n) {
     Dtype* spatial_out_diff = spatial_out_blob_.mutable_cpu_diff() + spatial_out_blob_.offset(n);
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_mul(num_pixels_, spatial_norm_->cpu_data(),
+      caffe_mul(num_pixels_, spatial_norm_.cpu_data(),
           spatial_out_diff + channel_id * num_pixels_,
           spatial_out_diff + channel_id * num_pixels_);
     }
 
     Dtype* bilateral_out_diff = bilateral_out_blob_.mutable_cpu_diff() + bilateral_out_blob_.offset(n);
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_mul(num_pixels_, bilateral_norms_->cpu_data() + bilateral_norms_->offset(n),
+      caffe_mul(num_pixels_, bilateral_norms_.cpu_data() + bilateral_norms_.offset(n),
           bilateral_out_diff + channel_id * num_pixels_,
           bilateral_out_diff + channel_id * num_pixels_);
     }
@@ -234,8 +229,7 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
   for (int n = 0; n < num_; ++n) {
     spatial_lattice_->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
         spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n), channels_, true, false);
-
-    (*bilateral_lattices_)[n]->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
+    bilateral_lattices_[n]->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
         bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n), channels_, true, true);
   }
 

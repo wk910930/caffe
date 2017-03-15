@@ -85,8 +85,8 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   shared_ptr<SplitLayer<Dtype> > split_layer_;
 
   shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice_;
-  Dtype* bilateral_kernel_buffer_;
   vector<shared_ptr<ModifiedPermutohedral<Dtype> > > bilateral_lattices_;
+  Dtype* bilateral_kernel_buffer_;
 };
 
 }  // namespace caffe

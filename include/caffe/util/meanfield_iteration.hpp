@@ -34,20 +34,20 @@ class MeanfieldIteration {
    * Must be invoked only once after the construction of the layer.
    */
   void OneTimeSetUp(
-      Blob<Dtype>* const unary_terms,
-      Blob<Dtype>* const softmax_input,
-      Blob<Dtype>* const output_blob,
-      const shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice,
-      const Blob<Dtype>* const spatial_norm,
+      Blob<Dtype>* unary_terms,
+      Blob<Dtype>* softmax_input,
+      Blob<Dtype>* output_blob,
+      const shared_ptr<ModifiedPermutohedral<Dtype> >& spatial_lattice,
+      const Blob<Dtype>& spatial_norm,
       int unary_term_weight, int pairwise_term_weight);
 
   /**
    * Must be invoked before invoking {@link Forward_cpu()}
    */
   virtual void PrePass(
-      const vector<shared_ptr<Blob<Dtype> > >&  parameters_to_copy_from,
-      const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >* const bilateral_lattices,
-      const Blob<Dtype>* const bilateral_norms);
+      const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
+      const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >& bilateral_lattices,
+      const Blob<Dtype>& bilateral_norms);
 
   /**
    * CPU Forward/Backward pass
@@ -86,19 +86,21 @@ class MeanfieldIteration {
   Blob<Dtype> prob_;
   Blob<Dtype> message_passing_;
 
-  vector<Blob<Dtype>*> softmax_top_vec_;
-  vector<Blob<Dtype>*> softmax_bottom_vec_;
+  // Addition
+  shared_ptr<EltwiseLayer<Dtype> > sum_layer_;
   vector<Blob<Dtype>*> sum_top_vec_;
   vector<Blob<Dtype>*> sum_bottom_vec_;
 
+  // Normalization
   shared_ptr<SoftmaxLayer<Dtype> > softmax_layer_;
-  shared_ptr<EltwiseLayer<Dtype> > sum_layer_;
+  vector<Blob<Dtype>*> softmax_top_vec_;
+  vector<Blob<Dtype>*> softmax_bottom_vec_;
+
+  Blob<Dtype> spatial_norm_;
+  Blob<Dtype> bilateral_norms_;
 
   shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice_;
-  const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >* bilateral_lattices_;
-
-  const Blob<Dtype>* spatial_norm_;
-  const Blob<Dtype>* bilateral_norms_;
+  vector<shared_ptr<ModifiedPermutohedral<Dtype> > > bilateral_lattices_;
 };
 
 }  // namespace caffe
