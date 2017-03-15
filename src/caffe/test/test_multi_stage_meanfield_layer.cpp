@@ -69,36 +69,6 @@ TYPED_TEST(MultiStageMeanfieldLayerTest, TestSetUp) {
   EXPECT_EQ(this->blob_top_->width(), 6);
 }
 
-// Unary term should never change during the mean filed iteration
-TYPED_TEST(MultiStageMeanfieldLayerTest, TestUnaryTerms) {
-  typedef typename TypeParam::Dtype Dtype;
-  LayerParameter layer_param;
-  MultiStageMeanfieldParameter* ms_mf_param =
-      layer_param.mutable_multi_stage_meanfield_param();
-  ms_mf_param->set_num_iterations(5);
-  ms_mf_param->set_bilateral_filter_weights_str("5 5 5 5 5");
-  ms_mf_param->set_spatial_filter_weights_str("3 3 3 3 3");
-  ms_mf_param->set_compatibility_mode(MultiStageMeanfieldParameter_Mode_POTTS);
-  ms_mf_param->set_theta_alpha(5);
-  ms_mf_param->set_theta_beta(2);
-  ms_mf_param->set_theta_gamma(3);
-
-  MultiStageMeanfieldLayer<Dtype> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-  layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-
-  Blob<Dtype> ori_unary_terms_blob(1, 5, 6, 6);
-  caffe::FillAsLogProb(&ori_unary_terms_blob);
-  EXPECT_EQ(ori_unary_terms_blob.count(), this->unary_terms_blob_->count());
-  const int count = this->blob_top_->count();
-  EXPECT_EQ(count, this->unary_terms_blob_->count());
-
-  for (int i = 0; i < count; ++i) {
-    EXPECT_EQ(this->unary_terms_blob_->cpu_data()[i],
-        ori_unary_terms_blob.cpu_data()[i]);
-  }
-}
-
 TYPED_TEST(MultiStageMeanfieldLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
