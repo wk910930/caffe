@@ -20,9 +20,9 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   HashTableCopy hash_table(d_, N_*(d_+1));
 
   // Allocate the class memory
-  offset_.resize((d_+1)*N_);
-  rank_.resize((d_+1)*N_);
-  barycentric_.resize((d_+1)*N_);
+  offset_.resize((d_+1) * N_);
+  rank_.resize((d_+1) * N_);
+  barycentric_.resize((d_+1) * N_);
 
   // Allocate the local memory
   Dtype* scale_factor = new Dtype[d_];
@@ -34,11 +34,11 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   int* key = new int[d_+1];
 
   // Compute the canonical simplex
-  for (int i = 0; i <= d_; i++) {
-    for (int j = 0; j <= d_ - i; j++) {
+  for (int i = 0; i <= d_; ++i) {
+    for (int j = 0; j <= d_ - i; ++j) {
       canonical[i * (d_+1) + j] = i;
     }
-    for (int j = d_ - i + 1; j <= d_; j++) {
+    for (int j = d_ - i + 1; j <= d_; ++j) {
       canonical[i * (d_+1) + j] = i - (d_+1);
     }
   }
@@ -51,9 +51,9 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
         * inv_std_dev;
   }
   // Compute the simplex each feature lies in
-  for (int k = 0; k < N_; k++) {
+  for (int k = 0; k < N_; ++k) {
     // Elevate the features ( y = Ep, see p.5 in [Adams etal 2010])
-    const Dtype* f = (features + k * num_dimensions);
+    const Dtype* f = features + k * num_dimensions;
     // sm contains the sum of 1..n of our feature vector
     Dtype sm = 0;
     for (int j = d_; j > 0; j--) {
@@ -122,11 +122,11 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     // Compute all vertices and their offset
     for (int remainder = 0; remainder <= d_; ++remainder) {
       for (int i = 0; i < d_; ++i) {
-        key[i] = rem0[i] + canonical[ remainder*(d_+1) + rank[i]];
+        key[i] = rem0[i] + canonical[remainder*(d_+1) + rank[i]];
       }
       offset_[k*(d_+1) + remainder] = hash_table.find(key, true);
       rank_[k*(d_+1) + remainder] = rank[remainder];
-      barycentric_[k*(d_+1)+remainder] = barycentric[remainder];
+      barycentric_[k*(d_+1) + remainder] = barycentric[remainder];
     }
   }
   delete [] scale_factor;
@@ -212,10 +212,10 @@ void ModifiedPermutohedral<Dtype>::compute(Dtype* out, const Dtype* in,
         out[i + k * N_] = 0;
       }
     }
-    for (int j = 0; j <= d_; j++) {
+    for (int j = 0; j <= d_; ++j) {
       int o = offset_[i * (d_+1) + j] + 1;
       Dtype w = barycentric_[i * (d_+1) + j];
-      for (int k = 0; k < value_size; k++) {
+      for (int k = 0; k < value_size; ++k) {
         out[i + k * N_] += w * values[o * value_size + k] * alpha;
       }
     }

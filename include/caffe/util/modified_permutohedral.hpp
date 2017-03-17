@@ -1,6 +1,8 @@
 #ifndef CAFFE_MODIFIED_PERMUTOHEDRAL_HPP_
 #define CAFFE_MODIFIED_PERMUTOHEDRAL_HPP_
 
+#include <vector>
+
 #include "caffe/common.hpp"
 
 namespace caffe {
