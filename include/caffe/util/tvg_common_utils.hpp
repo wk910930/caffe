@@ -27,8 +27,10 @@ void read_into_the_diagonal(const std::string& source, Blob<Dtype>* blob) {
     }
   }
 }
-template void read_into_the_diagonal(const std::string& source, Blob<float>* blob);
-template void read_into_the_diagonal(const std::string& source, Blob<double>* blob);
+template void read_into_the_diagonal(const std::string& source,
+    Blob<float>* blob);
+template void read_into_the_diagonal(const std::string& source,
+    Blob<double>* blob);
 
 
 template <typename Dtype>
