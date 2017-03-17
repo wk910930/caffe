@@ -1,13 +1,6 @@
 #ifndef CAFFE_MODIFIED_PERMUTOHEDRAL_HPP_
 #define CAFFE_MODIFIED_PERMUTOHEDRAL_HPP_
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
-
 #include "caffe/common.hpp"
 
 namespace caffe {
@@ -25,9 +18,10 @@ class ModifiedPermutohedral {
   void compute(Dtype* out, const Dtype* in, int value_size,
       bool reverse = false, bool add = false) const;
 
- protected:
+ private:
   struct Neighbors{
-    int n1, n2;
+    int n1;
+    int n2;
     Neighbors(int n1 = 0, int n2 = 0):n1(n1), n2(n2) {}
   };
 
