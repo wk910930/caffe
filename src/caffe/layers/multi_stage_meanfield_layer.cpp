@@ -187,9 +187,15 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
   // Initialize the compatibility matrix.
   this->blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   caffe_set(channels_ * channels_, Dtype(0.), this->blobs_[2]->mutable_cpu_data());
-  // Initialize it to have the Potts model.
-  for (int c = 0; c < channels_; ++c) {
-    (this->blobs_[2]->mutable_cpu_data())[c * channels_ + c] = Dtype(-1.);
+  // Initialize compatibility matrix
+  switch (meanfield_param.compatibility_mode()) {
+  case MultiStageMeanfieldParameter_Mode_POTTS:
+    for (int c = 0; c < channels_; ++c) {
+      this->blobs_[2]->mutable_cpu_data()[c * channels_ + c] = Dtype(-1.);
+    }
+    break;
+  default:
+    LOG(FATAL) << "Unknown compatibility mode.";
   }
 }
 
@@ -212,8 +218,6 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
   spatial_lattice_->init(spatial_kernel, 2, num_pixels_);
   spatial_lattice_->compute(norm_data, norm_feed_, 1);
 
-  // This value has been computed either on the GPU or CPU.
-  // May be more efficient to just do everything on CPU.
   for (int i = 0; i < num_pixels_; ++i) {
     norm_data[i] = 1.0f / (norm_data[i] + eps_);
   }
