@@ -186,7 +186,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
   read_into_the_diagonal(meanfield_param.bilateral_filter_weights_str(), this->blobs_[1].get());
   // Initialize the compatibility matrix.
   this->blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-  caffe_set(channels_ * channels_, Dtype(0.), this->blobs_[2]->mutable_cpu_data());
+  caffe_set(this->blobs_[2]->count(), Dtype(0.), this->blobs_[2]->mutable_cpu_data());
   // Initialize compatibility matrix
   switch (meanfield_param.compatibility_mode()) {
   case MultiStageMeanfieldParameter_Mode_POTTS:
