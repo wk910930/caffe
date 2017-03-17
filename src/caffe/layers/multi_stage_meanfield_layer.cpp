@@ -133,7 +133,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
   bilateral_lattices_.resize(num_);
   for (int n = 0; n < num_; ++n) {
     const Dtype* rgb_data = bottom[2]->cpu_data() + bottom[2]->offset(n);
-    compute_bilateral_kernel(rgb_data, n, bilateral_kernel_buffer_);
+    compute_bilateral_kernel(rgb_data, bilateral_kernel_buffer_);
     bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
     bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, num_pixels_);
     // Calculate bilateral filter normalization factors.
@@ -232,7 +232,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_bilateral_buffers() {
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(
-    const Dtype* rgb_data, int n, Dtype* output_kernel) {
+    const Dtype* rgb_data, Dtype* output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
     output_kernel[5 * p + 0] = static_cast<Dtype>(p % width_) / theta_alpha_;
     output_kernel[5 * p + 1] = static_cast<Dtype>(p / width_) / theta_alpha_;
