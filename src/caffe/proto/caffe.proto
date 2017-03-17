@@ -1347,6 +1347,8 @@ message MultiStageMeanfieldParameter {
   optional uint32 pairwise_term_weight = 9 [default = 1];
 
   optional bool force_cpu = 10 [default = false];
+  // Epsilon for not dividing by zero while normalizing variance
+  optional float eps = 11 [default = 1e-9];
 }
 
 message MVNParameter {

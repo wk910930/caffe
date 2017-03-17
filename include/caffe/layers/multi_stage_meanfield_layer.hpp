@@ -68,6 +68,8 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   int width_;
   int num_pixels_;
 
+  float eps_;
+
   Dtype theta_alpha_;
   Dtype theta_beta_;
   Dtype theta_gamma_;

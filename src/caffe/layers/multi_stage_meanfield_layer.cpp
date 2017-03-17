@@ -46,6 +46,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   count_ = bottom[0]->count();
   num_pixels_ = height_ * width_;
 
+  eps_ = meanfield_param.eps();
+
   // Check spatial dim between unary term and image
   CHECK_EQ(num_, bottom[2]->num())
       << "num does not match between unary term and image";
@@ -138,7 +140,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
     Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() + bilateral_norms_.offset(n);
     bilateral_lattices_[n]->compute(norm_output_data, norm_feed_, 1);
     for (int i = 0; i < num_pixels_; ++i) {
-      norm_output_data[i] = 1.f / (norm_output_data[i] + 1e-20f);
+      norm_output_data[i] = 1.f / (norm_output_data[i] + eps_);
     }
   }
   for (int i = 0; i < num_iterations_; ++i) {
@@ -151,7 +153,7 @@ template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
     const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
-  for (int i = (num_iterations_ - 1); i >= 0; --i) {
+  for (int i = num_iterations_ - 1; i >= 0; --i) {
     meanfield_iterations_[i]->Backward_cpu();
   }
   vector<bool> split_layer_propagate_down(1, true);
@@ -213,7 +215,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
   // This value has been computed either on the GPU or CPU.
   // May be more efficient to just do everything on CPU.
   for (int i = 0; i < num_pixels_; ++i) {
-    norm_data[i] = 1.0f / (norm_data[i] + 1e-20f);
+    norm_data[i] = 1.0f / (norm_data[i] + eps_);
   }
   delete[] spatial_kernel;
 }
