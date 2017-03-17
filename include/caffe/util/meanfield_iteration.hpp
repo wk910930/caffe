@@ -46,7 +46,8 @@ class MeanfieldIteration {
    */
   virtual void PrePass(
       const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
-      const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >& bilateral_lattices,
+      const vector<shared_ptr<
+          ModifiedPermutohedral<Dtype> > >& bilateral_lattices,
       const Blob<Dtype>& bilateral_norms);
 
   /**

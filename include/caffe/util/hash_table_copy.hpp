@@ -28,8 +28,8 @@ class HashTableCopy{
     filled_ = 0;
     std::fill(table_.begin(), table_.end(), -1);
   }
-  int find(const short * k, bool create = false) {
-    if (2*filled_ >= capacity_) {
+  int find(const int* k, bool create = false) {
+    if (2 * filled_ >= capacity_) {
       grow();
     }
     // Get the hash value
@@ -65,19 +65,19 @@ class HashTableCopy{
       }
     }
   }
-  const short * getKey(int i) const {
-    return &keys_[i*key_size_];
+  const int* getKey(int i) const {
+    return &keys_[i * key_size_];
   }
 
  protected:
   size_t key_size_, filled_, capacity_;
-  std::vector< short > keys_;
-  std::vector< int > table_;
+  std::vector<int> keys_;
+  std::vector<int> table_;
   void grow() {
     // Create the new memory and copy the values in
     int old_capacity = capacity_;
     capacity_ *= 2;
-    std::vector<short> old_keys((old_capacity+10)*key_size_);
+    std::vector<int> old_keys((old_capacity+10)*key_size_);
     std::copy(keys_.begin(), keys_.end(), old_keys.begin());
     std::vector<int> old_table(capacity_, -1);
 
@@ -95,7 +95,7 @@ class HashTableCopy{
       }
     }
   }
-  size_t hash(const short * k) {
+  size_t hash(const int* k) {
     size_t r = 0;
     for (size_t i = 0; i < key_size_; i++) {
       r += k[i];
