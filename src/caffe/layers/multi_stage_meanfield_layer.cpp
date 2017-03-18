@@ -1,21 +1,5 @@
-/*!
- *  \brief     The Caffe layer that implements the CRF-RNN described in the paper:
- *             Conditional Random Fields as Recurrent Neural Networks. IEEE ICCV 2015.
- *
- *  \authors   Sadeep Jayasumana, Bernardino Romera-Paredes, Shuai Zheng, Zhizhong Su.
- *  \version   1.0
- *  \date      2015
- *  \copyright Torr Vision Group, University of Oxford.
- *  \details   If you use this code, please consider citing the paper:
- *             Shuai Zheng, Sadeep Jayasumana, Bernardino Romera-Paredes, Vibhav Vineet, Zhizhong Su, Dalong Du,
- *             Chang Huang, Philip H. S. Torr. Conditional Random Fields as Recurrent Neural Networks. IEEE ICCV 2015.
- *
- *             For more information about CRF-RNN, please visit the project website http://crfasrnn.torr.vision.
- */
 #include <vector>
 
-#include "caffe/filler.hpp"
-#include "caffe/layer.hpp"
 #include "caffe/layers/multi_stage_meanfield_layer.hpp"
 #include "caffe/util/tvg_common_utils.hpp"
 
@@ -36,6 +20,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   theta_beta_ = meanfield_param.theta_beta();
   theta_gamma_ = meanfield_param.theta_gamma();
 
+  eps_ = meanfield_param.eps();
+
   num_ = bottom[0]->num();
   if (num_ > 1) {
     LOG(INFO) << "This implementation has not been tested batch size > 1.";
@@ -45,9 +31,6 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   width_ = bottom[0]->width();
   count_ = bottom[0]->count();
   num_pixels_ = height_ * width_;
-
-  eps_ = meanfield_param.eps();
-
   // Check spatial dim between unary term and image
   CHECK_EQ(num_, bottom[2]->num())
       << "num does not match between unary term and image";
@@ -67,7 +50,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
 
   init_spatial_lattice();
 
-  // Allocate space for bilateral kernels. This is a temporary buffer used to compute bilateral lattices later.
+  // Allocate space for bilateral kernels.
+  // This is a temporary buffer used to compute bilateral lattices later.
   // Also allocate space for holding bilateral filter normalization values.
   init_bilateral_buffers();
 
@@ -91,7 +75,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   // So we need only (num_iterations_ - 1) blobs.
   iteration_output_blobs_.resize(num_iterations_ - 1);
   for (int i = 0; i < num_iterations_ - 1; ++i) {
-    iteration_output_blobs_[i].reset(new Blob<Dtype>(num_, channels_, height_, width_));
+    iteration_output_blobs_[i].reset(
+        new Blob<Dtype>(num_, channels_, height_, width_));
   }
   // Make instances of MeanfieldIteration and initialize them.
   meanfield_iterations_.resize(num_iterations_);
@@ -135,14 +120,16 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
     bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
     bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, num_pixels_);
     // Calculate bilateral filter normalization factors.
-    Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() + bilateral_norms_.offset(n);
+    Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() +
+        bilateral_norms_.offset(n);
     bilateral_lattices_[n]->compute(norm_output_data, norm_feed_, 1);
     for (int i = 0; i < num_pixels_; ++i) {
       norm_output_data[i] = 1.f / (norm_output_data[i] + eps_);
     }
   }
   for (int i = 0; i < num_iterations_; ++i) {
-    meanfield_iterations_[i]->PrePass(this->blobs_, bilateral_lattices_, bilateral_norms_);
+    meanfield_iterations_[i]->PrePass(
+        this->blobs_, bilateral_lattices_, bilateral_norms_);
     meanfield_iterations_[i]->Forward_cpu();
   }
 }
@@ -155,15 +142,18 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
     meanfield_iterations_[i]->Backward_cpu();
   }
   vector<bool> split_layer_propagate_down(1, true);
-  split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down, split_layer_bottom_vec_);
+  split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down,
+      split_layer_bottom_vec_);
   // Accumulate diffs from mean field iterations.
   for (int blob_id = 0; blob_id < this->blobs_.size(); ++blob_id) {
     Blob<Dtype>* cur_blob = this->blobs_[blob_id].get();
     if (this->param_propagate_down_[blob_id]) {
       caffe_set(cur_blob->count(), Dtype(0), cur_blob->mutable_cpu_diff());
       for (int i = 0; i < num_iterations_; ++i) {
-        const Dtype* diffs_to_add = meanfield_iterations_[i]->blobs()[blob_id]->cpu_diff();
-        caffe_axpy(cur_blob->count(), Dtype(1.), diffs_to_add, cur_blob->mutable_cpu_diff());
+        const Dtype* diffs_to_add =
+            meanfield_iterations_[i]->blobs()[blob_id]->cpu_diff();
+        caffe_axpy(cur_blob->count(), Dtype(1.),
+            diffs_to_add, cur_blob->mutable_cpu_diff());
       }
     }
   }
@@ -180,11 +170,14 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
   this->blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   this->blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   // Initialize the kernels weights.
-  read_into_the_diagonal(meanfield_param.spatial_filter_weights_str(), this->blobs_[0].get());
-  read_into_the_diagonal(meanfield_param.bilateral_filter_weights_str(), this->blobs_[1].get());
+  read_into_the_diagonal(meanfield_param.spatial_filter_weights_str(),
+      this->blobs_[0].get());
+  read_into_the_diagonal(meanfield_param.bilateral_filter_weights_str(),
+      this->blobs_[1].get());
   // Initialize the compatibility matrix.
   this->blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-  caffe_set(this->blobs_[2]->count(), Dtype(0.), this->blobs_[2]->mutable_cpu_data());
+  caffe_set(this->blobs_[2]->count(), Dtype(0.),
+      this->blobs_[2]->mutable_cpu_data());
   // Initialize compatibility matrix
   switch (meanfield_param.compatibility_mode()) {
   case MultiStageMeanfieldParameter_Mode_POTTS:
@@ -241,7 +234,8 @@ void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(
 }
 
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(Dtype* output_kernel) {
+void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(
+    Dtype* output_kernel) {
   for (int p = 0; p < num_pixels_; ++p) {
     output_kernel[2 * p + 0] = static_cast<Dtype>(p % width_) / theta_gamma_;
     output_kernel[2 * p + 1] = static_cast<Dtype>(p / width_) / theta_gamma_;

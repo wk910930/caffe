@@ -1,17 +1,3 @@
-/*!
- *  \brief     The Caffe layer that implements the CRF-RNN described in the paper:
- *             Conditional Random Fields as Recurrent Neural Networks. IEEE ICCV 2015.
- *
- *  \authors   Sadeep Jayasumana, Bernardino Romera-Paredes, Shuai Zheng, Zhizhong Su.
- *  \version   1.0
- *  \date      2015
- *  \copyright Torr Vision Group, University of Oxford.
- *  \details   If you use this code, please consider citing the paper:
- *             Shuai Zheng, Sadeep Jayasumana, Bernardino Romera-Paredes, Vibhav Vineet, Zhizhong Su, Dalong Du,
- *             Chang Huang, Philip H. S. Torr. Conditional Random Fields as Recurrent Neural Networks. IEEE ICCV 2015.
- *
- *             For more information about CRF-RNN, please visit the project website http://crfasrnn.torr.vision.
- */
 #include <vector>
 
 #include "caffe/layers/multi_stage_meanfield_layer.hpp"
@@ -31,14 +17,16 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(
     bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
     bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, num_pixels_);
     // Calculate bilateral filter normalization factors.
-    Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() + bilateral_norms_.offset(n);
+    Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() +
+        bilateral_norms_.offset(n);
     bilateral_lattices_[n]->compute(norm_output_data, norm_feed_, 1);
     for (int i = 0; i < num_pixels_; ++i) {
       norm_output_data[i] = 1.f / (norm_output_data[i] + eps_);
     }
   }
   for (int i = 0; i < num_iterations_; ++i) {
-    meanfield_iterations_[i]->PrePass(this->blobs_, bilateral_lattices_, bilateral_norms_);
+    meanfield_iterations_[i]->PrePass(
+        this->blobs_, bilateral_lattices_, bilateral_norms_);
     meanfield_iterations_[i]->Forward_gpu();
   }
 }
@@ -51,15 +39,18 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_gpu(
     meanfield_iterations_[i]->Backward_gpu();
   }
   vector<bool> split_layer_propagate_down(1, true);
-  split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down, split_layer_bottom_vec_);
+  split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down,
+      split_layer_bottom_vec_);
   // Accumulate diffs from mean field iterations.
   for (int blob_id = 0; blob_id < this->blobs_.size(); ++blob_id) {
     Blob<Dtype>* cur_blob = this->blobs_[blob_id].get();
     if (this->param_propagate_down_[blob_id]) {
       caffe_gpu_set(cur_blob->count(), Dtype(0), cur_blob->mutable_gpu_diff());
       for (int i = 0; i < num_iterations_; ++i) {
-        const Dtype* diffs_to_add = meanfield_iterations_[i]->blobs()[blob_id]->gpu_diff();
-        caffe_gpu_axpy(cur_blob->count(), Dtype(1.), diffs_to_add, cur_blob->mutable_gpu_diff());
+        const Dtype* diffs_to_add =
+            meanfield_iterations_[i]->blobs()[blob_id]->gpu_diff();
+        caffe_gpu_axpy(cur_blob->count(), Dtype(1.),
+            diffs_to_add, cur_blob->mutable_gpu_diff());
       }
     }
   }
