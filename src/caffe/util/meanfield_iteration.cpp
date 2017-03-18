@@ -56,7 +56,7 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
   softmax_bottom_vec_.clear();
   softmax_bottom_vec_.push_back(softmax_input);
   softmax_top_vec_.clear();
-  softmax_top_vec_.push_back(&prob_);
+  softmax_top_vec_.push_back(&softmax_output_);
   LayerParameter softmax_param;
   softmax_layer_.reset(new SoftmaxLayer<Dtype>(softmax_param));
   softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
@@ -94,12 +94,13 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
     // spatial kernel
     Dtype* spatial_out_data = spatial_out_blob_.mutable_cpu_data() +
         spatial_out_blob_.offset(n);
-    const Dtype* prob_input_data = prob_.cpu_data() + prob_.offset(n);
-    spatial_lattice_->compute(spatial_out_data, prob_input_data,
-        channels_, false);
+    const Dtype* prob_input_data = softmax_output_.cpu_data() +
+        softmax_output_.offset(n);
+    spatial_lattice_->compute(spatial_out_data, prob_input_data, channels_);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_mul(num_pixels_, spatial_norm_.cpu_data(),
+      caffe_mul(num_pixels_,
+          spatial_norm_.cpu_data(),
           spatial_out_data + channel_id * num_pixels_,
           spatial_out_data + channel_id * num_pixels_);
     }
@@ -107,7 +108,7 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
     Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data() +
         bilateral_out_blob_.offset(n);
     bilateral_lattices_[n]->compute(bilateral_out_data, prob_input_data,
-        channels_, false);
+        channels_);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_,
@@ -239,10 +240,12 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
 
   /*-------------------- Gradient for message passing --------------------*/
   for (int n = 0; n < num_; ++n) {
-    spatial_lattice_->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
+    spatial_lattice_->compute(softmax_output_.mutable_cpu_diff() +
+        softmax_output_.offset(n),
         spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n),
         channels_, true, false);
-    bilateral_lattices_[n]->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
+    bilateral_lattices_[n]->compute(softmax_output_.mutable_cpu_diff() +
+        softmax_output_.offset(n),
         bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n),
         channels_, true, true);
   }

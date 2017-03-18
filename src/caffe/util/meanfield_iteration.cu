@@ -17,9 +17,9 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
     // spatial kernel
     Dtype* spatial_out_cpu_data = spatial_out_blob_.mutable_cpu_data() +
         spatial_out_blob_.offset(n);
-    const Dtype* prob_input_data = prob_.cpu_data() + prob_.offset(n);
-    spatial_lattice_->compute(spatial_out_cpu_data, prob_input_data,
-        channels_, false);
+    const Dtype* prob_input_data = softmax_output_.cpu_data() +
+        softmax_output_.offset(n);
+    spatial_lattice_->compute(spatial_out_cpu_data, prob_input_data, channels_);
     Dtype* spatial_out_data = spatial_out_blob_.mutable_gpu_data() +
         spatial_out_blob_.offset(n);
     // Pixel-wise normalization.
@@ -32,7 +32,7 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
     Dtype* bilateral_out_cpu_data = bilateral_out_blob_.mutable_cpu_data() +
         bilateral_out_blob_.offset(n);
     bilateral_lattices_[n]->compute(bilateral_out_cpu_data, prob_input_data,
-        channels_, false);
+        channels_);
     Dtype* bilateral_out_data = bilateral_out_blob_.mutable_gpu_data() +
         bilateral_out_blob_.offset(n);
     // Pixel-wise normalization.
@@ -166,10 +166,12 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
 
   /*-------------------- Gradient for message passing --------------------*/
   for (int n = 0; n < num_; ++n) {
-    spatial_lattice_->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
+    spatial_lattice_->compute(softmax_output_.mutable_cpu_diff() +
+        softmax_output_.offset(n),
         spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n),
         channels_, true, false);
-    bilateral_lattices_[n]->compute(prob_.mutable_cpu_diff() + prob_.offset(n),
+    bilateral_lattices_[n]->compute(softmax_output_.mutable_cpu_diff() +
+        softmax_output_.offset(n),
         bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n),
         channels_, true, true);
   }
