@@ -35,7 +35,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   CHECK_EQ(num_, bottom[2]->num())
       << "num does not match between unary term and image";
   CHECK_EQ(3, bottom[2]->channels())
-      << "only support 3-channels image";
+      << "only support 3-channel image";
   CHECK_EQ(height_, bottom[2]->height())
       << "height does not match between unary term and image";
   CHECK_EQ(width_, bottom[2]->width())
@@ -48,8 +48,10 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
     init_param_blobs(meanfield_param);
   }  // parameter initialization
 
-  init_spatial_lattice();
+  norm_feed_ = new Dtype[num_pixels_];
+  caffe_set(num_pixels_, Dtype(1.0), norm_feed_);
 
+  init_spatial_lattice();
   // Allocate space for bilateral kernels.
   // This is a temporary buffer used to compute bilateral lattices later.
   // Also allocate space for holding bilateral filter normalization values.
@@ -113,10 +115,11 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
   split_layer_bottom_vec_[0] = bottom[0];
   split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
   // Initialize the bilateral lattices.
+  bilateral_lattices_.clear();
   bilateral_lattices_.resize(num_);
   for (int n = 0; n < num_; ++n) {
     const Dtype* rgb_data = bottom[2]->cpu_data() + bottom[2]->offset(n);
-    compute_bilateral_kernel(rgb_data, bilateral_kernel_buffer_);
+    compute_bilateral_kernel(rgb_data);
     bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
     bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, num_pixels_);
     // Calculate bilateral filter normalization factors.
@@ -124,7 +127,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
         bilateral_norms_.offset(n);
     bilateral_lattices_[n]->compute(norm_output_data, norm_feed_, 1);
     for (int i = 0; i < num_pixels_; ++i) {
-      norm_output_data[i] = 1.f / (norm_output_data[i] + eps_);
+      norm_output_data[i] = 1.0f / (norm_output_data[i] + eps_);
     }
   }
   for (int i = 0; i < num_iterations_; ++i) {
@@ -176,13 +179,13 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
       this->blobs_[1].get());
   // Initialize the compatibility matrix.
   this->blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-  caffe_set(this->blobs_[2]->count(), Dtype(0.),
+  caffe_set(this->blobs_[2]->count(), Dtype(0),
       this->blobs_[2]->mutable_cpu_data());
   // Initialize compatibility matrix
   switch (meanfield_param.compatibility_mode()) {
   case MultiStageMeanfieldParameter_Mode_POTTS:
     for (int c = 0; c < channels_; ++c) {
-      this->blobs_[2]->mutable_cpu_data()[c * channels_ + c] = Dtype(-1.);
+      this->blobs_[2]->mutable_cpu_data()[c * channels_ + c] = Dtype(-1);
     }
     break;
   default:
@@ -193,52 +196,57 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
   // Initialize the spatial lattice.
-  // This does not need to be computed for every image
-  // because we use a fixed size.
-  Dtype* spatial_kernel = new Dtype[2 * num_pixels_];
-  compute_spatial_kernel(spatial_kernel);
-
+  // This does not need to be computed for each image for the fixed size.
+  int spatial_dim = 2;
+  spatial_kernel_buffer_ = new Dtype[spatial_dim * num_pixels_];
   spatial_norm_.Reshape(1, 1, height_, width_);
-  Dtype* norm_data = spatial_norm_.mutable_cpu_data();
-
-  // Calculate spatial filter normalization factors.
-  norm_feed_ = new Dtype[num_pixels_];
-  caffe_set(num_pixels_, Dtype(1.0), norm_feed_);
 
   spatial_lattice_.reset(new ModifiedPermutohedral<Dtype>());
-  spatial_lattice_->init(spatial_kernel, 2, num_pixels_);
-  spatial_lattice_->compute(norm_data, norm_feed_, 1);
+  compute_spatial_kernel();
+  spatial_lattice_->init(spatial_kernel_buffer_, spatial_dim, num_pixels_);
+  spatial_lattice_->compute(spatial_norm_.mutable_cpu_data(), norm_feed_, 1);
 
   for (int i = 0; i < num_pixels_; ++i) {
-    norm_data[i] = 1.0f / (norm_data[i] + eps_);
+    spatial_norm_.mutable_cpu_data()[i] =
+        1.0f / (spatial_norm_.mutable_cpu_data()[i] + eps_);
   }
-  delete[] spatial_kernel;
 }
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::init_bilateral_buffers() {
-  bilateral_kernel_buffer_ = new Dtype[5 * num_pixels_];
+  int bilateral_dim = 5;
+  bilateral_kernel_buffer_ = new Dtype[bilateral_dim * num_pixels_];
   bilateral_norms_.Reshape(num_, 1, height_, width_);
 }
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(
-    const Dtype* rgb_data, Dtype* output_kernel) {
+    const Dtype* rgb_data) {
+  int bilateral_dim = 5;
+  caffe_set(bilateral_dim * num_pixels_, Dtype(0), bilateral_kernel_buffer_);
   for (int p = 0; p < num_pixels_; ++p) {
-    output_kernel[5 * p + 0] = static_cast<Dtype>(p % width_) / theta_alpha_;
-    output_kernel[5 * p + 1] = static_cast<Dtype>(p / width_) / theta_alpha_;
-    output_kernel[5 * p + 2] = static_cast<Dtype>((rgb_data + num_pixels_ * 0)[p] / theta_beta_);
-    output_kernel[5 * p + 3] = static_cast<Dtype>((rgb_data + num_pixels_ * 1)[p] / theta_beta_);
-    output_kernel[5 * p + 4] = static_cast<Dtype>((rgb_data + num_pixels_ * 2)[p] / theta_beta_);
+    bilateral_kernel_buffer_[bilateral_dim * p + 0] =
+        static_cast<Dtype>(p % width_) / theta_alpha_;
+    bilateral_kernel_buffer_[bilateral_dim * p + 1] =
+        static_cast<Dtype>(p / width_) / theta_alpha_;
+    bilateral_kernel_buffer_[bilateral_dim * p + 2] =
+        static_cast<Dtype>((rgb_data + num_pixels_ * 0)[p]) / theta_beta_;
+    bilateral_kernel_buffer_[bilateral_dim * p + 3] =
+        static_cast<Dtype>((rgb_data + num_pixels_ * 1)[p]) / theta_beta_;
+    bilateral_kernel_buffer_[bilateral_dim * p + 4] =
+        static_cast<Dtype>((rgb_data + num_pixels_ * 2)[p]) / theta_beta_;
   }
 }
 
 template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel(
-    Dtype* output_kernel) {
+void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel() {
+  int spatial_dim = 2;
+  caffe_set(spatial_dim * num_pixels_, Dtype(0), spatial_kernel_buffer_);
   for (int p = 0; p < num_pixels_; ++p) {
-    output_kernel[2 * p + 0] = static_cast<Dtype>(p % width_) / theta_gamma_;
-    output_kernel[2 * p + 1] = static_cast<Dtype>(p / width_) / theta_gamma_;
+    spatial_kernel_buffer_[spatial_dim * p + 0] =
+        static_cast<Dtype>(p % width_) / theta_gamma_;
+    spatial_kernel_buffer_[spatial_dim * p + 1] =
+        static_cast<Dtype>(p / width_) / theta_gamma_;
   }
 }
 
