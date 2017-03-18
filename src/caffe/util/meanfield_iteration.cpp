@@ -250,7 +250,7 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
         channels_, true, true);
   }
 
-  vector<bool> propagate_down(2, true);
+  vector<bool> propagate_down(softmax_bottom_vec_.size(), true);
   softmax_layer_->Backward(softmax_top_vec_, propagate_down,
       softmax_bottom_vec_);
 }
