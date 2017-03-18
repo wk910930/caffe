@@ -102,9 +102,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
         (i == 0) ? bottom[1] : iteration_output_blobs_[i - 1].get(),  // softmax input
         (i == num_iterations_ - 1) ? top[0] : iteration_output_blobs_[i].get(),  // output blob
         spatial_lattice_,  // spatial lattice
-        spatial_norm_,  // spatial normalization factors
-        meanfield_param.unary_term_weight(),
-        meanfield_param.pairwise_term_weight());
+        spatial_norm_);  // spatial normalization factors
   }
   this->param_propagate_down_.resize(this->blobs_.size(), true);
 }

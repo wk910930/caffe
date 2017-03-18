@@ -38,8 +38,7 @@ class MeanfieldIteration {
       Blob<Dtype>* softmax_input,
       Blob<Dtype>* output_blob,
       const shared_ptr<ModifiedPermutohedral<Dtype> >& spatial_lattice,
-      const Blob<Dtype>& spatial_norm,
-      int unary_term_weight, int pairwise_term_weight);
+      const Blob<Dtype>& spatial_norm);
 
   /**
    * Must be invoked before invoking {@link Forward_cpu()}
