@@ -1,6 +1,5 @@
 #include <vector>
 
-#include "caffe/filler.hpp"
 #include "caffe/layers/multi_stage_meanfield_layer.hpp"
 #include "caffe/util/tvg_common_utils.hpp"
 
@@ -15,9 +14,9 @@ class MultiStageMeanfieldLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   MultiStageMeanfieldLayerTest()
-      : unary_terms_blob_(new Blob<Dtype>(1, 5, 6, 6)),
-        previous_output_blob_(new Blob<Dtype>(1, 5, 6, 6)),
-        rgb_blob_(new Blob<Dtype>(1, 3, 6, 6)),
+      : unary_terms_blob_(new Blob<Dtype>(2, 4, 5, 5)),
+        previous_output_blob_(new Blob<Dtype>(2, 4, 5, 5)),
+        rgb_blob_(new Blob<Dtype>(2, 3, 5, 5)),
         blob_top_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     // fill the values
@@ -52,35 +51,33 @@ TYPED_TEST(MultiStageMeanfieldLayerTest, TestSetUp) {
   LayerParameter layer_param;
   MultiStageMeanfieldParameter* ms_mf_param =
       layer_param.mutable_multi_stage_meanfield_param();
-  ms_mf_param->set_num_iterations(2);
-  ms_mf_param->set_bilateral_filter_weights_str("5 5 5 5 5");
-  ms_mf_param->set_spatial_filter_weights_str("3 3 3 3 3");
-  ms_mf_param->set_compatibility_mode(MultiStageMeanfieldParameter_Mode_POTTS);
   ms_mf_param->set_theta_alpha(5);
   ms_mf_param->set_theta_beta(2);
   ms_mf_param->set_theta_gamma(3);
+  ms_mf_param->set_num_iterations(2);
+  ms_mf_param->set_spatial_filter_weights_str("3 3 3 3");
+  ms_mf_param->set_bilateral_filter_weights_str("5 5 5 5");
 
   MultiStageMeanfieldLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
 
-  EXPECT_EQ(this->blob_top_->num(), 1);
-  EXPECT_EQ(this->blob_top_->channels(), 5);
-  EXPECT_EQ(this->blob_top_->height(), 6);
-  EXPECT_EQ(this->blob_top_->width(), 6);
+  EXPECT_EQ(this->blob_top_->num(), 2);
+  EXPECT_EQ(this->blob_top_->channels(), 4);
+  EXPECT_EQ(this->blob_top_->height(), 5);
+  EXPECT_EQ(this->blob_top_->width(), 5);
 }
 
-TYPED_TEST(MultiStageMeanfieldLayerTest, TestGradient) {
+TYPED_TEST(MultiStageMeanfieldLayerTest, TestUnaryTermGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   MultiStageMeanfieldParameter* ms_mf_param =
       layer_param.mutable_multi_stage_meanfield_param();
-  ms_mf_param->set_num_iterations(2);
-  ms_mf_param->set_bilateral_filter_weights_str("5 5 5 5 5");
-  ms_mf_param->set_spatial_filter_weights_str("3 3 3 3 3");
-  ms_mf_param->set_compatibility_mode(MultiStageMeanfieldParameter_Mode_POTTS);
   ms_mf_param->set_theta_alpha(5);
   ms_mf_param->set_theta_beta(2);
   ms_mf_param->set_theta_gamma(3);
+  ms_mf_param->set_num_iterations(2);
+  ms_mf_param->set_spatial_filter_weights_str("3 3 3 3");
+  ms_mf_param->set_bilateral_filter_weights_str("5 5 5 5");
 
   MultiStageMeanfieldLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
@@ -89,6 +86,24 @@ TYPED_TEST(MultiStageMeanfieldLayerTest, TestGradient) {
   // Check gradients w.r.t. unary terms
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 0);
+}
+
+TYPED_TEST(MultiStageMeanfieldLayerTest, TestPreviousGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  MultiStageMeanfieldParameter* ms_mf_param =
+      layer_param.mutable_multi_stage_meanfield_param();
+  ms_mf_param->set_theta_alpha(5);
+  ms_mf_param->set_theta_beta(2);
+  ms_mf_param->set_theta_gamma(3);
+  ms_mf_param->set_num_iterations(2);
+  ms_mf_param->set_spatial_filter_weights_str("3 3 3 3");
+  ms_mf_param->set_bilateral_filter_weights_str("5 5 5 5");
+
+  MultiStageMeanfieldLayer<Dtype> layer(layer_param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+
+  GradientChecker<Dtype> checker(1e-2, 1e-3);
   // Check gradients w.r.t. previous outputs
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
       this->blob_top_vec_, 1);
