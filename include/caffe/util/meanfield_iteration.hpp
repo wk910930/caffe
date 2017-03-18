@@ -11,22 +11,6 @@
 
 namespace caffe {
 
-/*!
- *  \brief     A helper class for {@link MultiStageMeanfieldLayer} class, which is the Caffe layer that implements the
- *             CRF-RNN described in the paper: Conditional Random Fields as Recurrent Neural Networks. IEEE ICCV 2015.
- *
- *             This class itself is not a proper Caffe layer although it behaves like one to some degree.
- *
- *  \authors   Sadeep Jayasumana, Bernardino Romera-Paredes, Shuai Zheng, Zhizhong Su.
- *  \version   1.0
- *  \date      2015
- *  \copyright Torr Vision Group, University of Oxford.
- *  \details   If you use this code, please consider citing the paper:
- *             Shuai Zheng, Sadeep Jayasumana, Bernardino Romera-Paredes, Vibhav Vineet, Zhizhong Su, Dalong Du,
- *             Chang Huang, Philip H. S. Torr. Conditional Random Fields as Recurrent Neural Networks. IEEE ICCV 2015.
- *
- *             For more information about CRF-RNN, please visit the project website http://crfasrnn.torr.vision.
- */
 template <typename Dtype>
 class MeanfieldIteration {
  public:
@@ -55,13 +39,13 @@ class MeanfieldIteration {
   virtual void Forward_cpu();
   virtual void Backward_cpu();
 
-  #ifndef CPU_ONLY
   /**
    * GPU Forward/Backward pass
    */
+#ifndef CPU_ONLY
   virtual void Forward_gpu();
   virtual void Backward_gpu();
-  #endif
+#endif
 
   // A quick hack. This should be properly encapsulated.
   vector<shared_ptr<Blob<Dtype> > >& blobs() {

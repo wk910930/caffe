@@ -85,11 +85,10 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   for (int i = 0; i < num_iterations_; ++i) {
     meanfield_iterations_[i].reset(new MeanfieldIteration<Dtype>());
     meanfield_iterations_[i]->OneTimeSetUp(
-        split_layer_out_blobs_[i].get(),  // unary terms
-        (i == 0) ? bottom[1] : iteration_output_blobs_[i - 1].get(),  // softmax input
-        (i == num_iterations_ - 1) ? top[0] : iteration_output_blobs_[i].get(),  // output blob
-        spatial_lattice_,  // spatial lattice
-        spatial_norm_);  // spatial normalization factors
+        split_layer_out_blobs_[i].get(),
+        (i == 0) ? bottom[1] : iteration_output_blobs_[i - 1].get(),
+        (i == num_iterations_ - 1) ? top[0] : iteration_output_blobs_[i].get(),
+        spatial_lattice_, spatial_norm_);
   }
   this->param_propagate_down_.resize(this->blobs_.size(), true);
 }
