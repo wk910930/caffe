@@ -24,7 +24,8 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
         spatial_out_blob_.offset(n);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_gpu_mul(num_pixels_, spatial_norm_.gpu_data(),
+      caffe_gpu_mul(num_pixels_,
+          spatial_norm_.gpu_data(),
           spatial_out_data + channel_id * num_pixels_,
           spatial_out_data + channel_id * num_pixels_);
     }
@@ -89,17 +90,23 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
   caffe_gpu_set(this->blobs_[2]->count(), Dtype(0.),
       this->blobs_[2]->mutable_gpu_diff());
   for (int n = 0; n < num_; ++n) {
-    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans, channels_, channels_,
-        num_pixels_, Dtype(1.), pairwise_.gpu_diff() + pairwise_.offset(n),
-        message_passing_.gpu_data() + message_passing_.offset(n), Dtype(1.),
+    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
+        channels_, channels_, num_pixels_,
+        Dtype(1.),
+        pairwise_.gpu_diff() + pairwise_.offset(n),
+        message_passing_.gpu_data() + message_passing_.offset(n),
+        Dtype(1.),
         this->blobs_[2]->mutable_gpu_diff());
   }
 
   /*----------------- Gradient after compatibility transform -----------------*/
   for (int n = 0; n < num_; ++n) {
-    caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_, num_pixels_,
-        channels_, Dtype(1.), this->blobs_[2]->gpu_data(),
-        pairwise_.gpu_diff() + pairwise_.offset(n), Dtype(0.),
+    caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans,
+        channels_, num_pixels_, channels_,
+        Dtype(1.),
+        this->blobs_[2]->gpu_data(),
+        pairwise_.gpu_diff() + pairwise_.offset(n),
+        Dtype(0.),
         message_passing_.mutable_gpu_diff() + message_passing_.offset(n));
   }
 
@@ -110,25 +117,30 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
       this->blobs_[1]->mutable_gpu_diff());
 
   for (int n = 0; n < num_; ++n) {
-    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans, channels_, channels_,
-        num_pixels_, Dtype(1.),
+    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
+        channels_, channels_, num_pixels_,
+        Dtype(1.),
         message_passing_.gpu_diff() + message_passing_.offset(n),
         spatial_out_blob_.gpu_data() + spatial_out_blob_.offset(n),
-        Dtype(1.), this->blobs_[0]->mutable_gpu_diff());
+        Dtype(1.),
+        this->blobs_[0]->mutable_gpu_diff());
   }
 
   for (int n = 0; n < num_; ++n) {
-    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans, channels_, channels_,
-        num_pixels_, Dtype(1.),
+    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
+        channels_, channels_, num_pixels_,
+        Dtype(1.),
         message_passing_.gpu_diff() + message_passing_.offset(n),
         bilateral_out_blob_.gpu_data() + bilateral_out_blob_.offset(n),
-        Dtype(1.), this->blobs_[1]->mutable_gpu_diff());
+        Dtype(1.),
+        this->blobs_[1]->mutable_gpu_diff());
   }
 
   // Check whether there's a way to improve the accuracy of this calculation.
   for (int n = 0; n < num_; ++n) {
-    caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_,
-        num_pixels_, channels_, Dtype(1.),
+    caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans,
+        channels_, num_pixels_, channels_,
+        Dtype(1.),
         this->blobs_[0]->gpu_data(),
         message_passing_.gpu_diff() + message_passing_.offset(n),
         Dtype(0.),
@@ -136,8 +148,9 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
   }
 
   for (int n = 0; n < num_; ++n) {
-    caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, channels_,
-        num_pixels_, channels_, Dtype(1.),
+    caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans,
+        channels_, num_pixels_, channels_,
+        Dtype(1.),
         this->blobs_[1]->gpu_data(),
         message_passing_.gpu_diff() + message_passing_.offset(n),
         Dtype(0.),
@@ -149,7 +162,8 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
     Dtype* spatial_out_diff = spatial_out_blob_.mutable_gpu_diff() +
         spatial_out_blob_.offset(n);
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_gpu_mul(num_pixels_, spatial_norm_.gpu_data(),
+      caffe_gpu_mul(num_pixels_,
+          spatial_norm_.gpu_data(),
           spatial_out_diff + channel_id * num_pixels_,
           spatial_out_diff + channel_id * num_pixels_);
     }
@@ -166,12 +180,12 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
 
   /*-------------------- Gradient for message passing --------------------*/
   for (int n = 0; n < num_; ++n) {
-    spatial_lattice_->compute(softmax_output_.mutable_cpu_diff() +
-        softmax_output_.offset(n),
+    spatial_lattice_->compute(
+        softmax_output_.mutable_cpu_diff() + softmax_output_.offset(n),
         spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n),
         channels_, true, false);
-    bilateral_lattices_[n]->compute(softmax_output_.mutable_cpu_diff() +
-        softmax_output_.offset(n),
+    bilateral_lattices_[n]->compute(
+        softmax_output_.mutable_cpu_diff() + softmax_output_.offset(n),
         bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n),
         channels_, true, true);
   }
