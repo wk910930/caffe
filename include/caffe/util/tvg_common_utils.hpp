@@ -9,7 +9,9 @@ namespace caffe {
 
 template <typename Dtype>
 void read_into_the_diagonal(const std::string& source, Blob<Dtype>* blob) {
-  // Diagonal matrix must be square
+  // Check blob dim
+  CHECK_EQ(blob->num(), 1) << "num should be 1.";
+  CHECK_EQ(blob->channels(), 1) << "channels should be 1.";
   CHECK_EQ(blob->height(), blob->width()) << "Only support square matrix.";
   // Initialize blob as a zero-matrix
   Dtype* data = blob->mutable_cpu_data();
@@ -34,6 +36,24 @@ template void read_into_the_diagonal(const std::string& source,
     Blob<float>* blob);
 template void read_into_the_diagonal(const std::string& source,
     Blob<double>* blob);
+
+
+template <typename Dtype>
+void read_into_the_diagonal(Dtype value, Blob<Dtype>* blob) {
+  // Check blob dim
+  CHECK_EQ(blob->num(), 1) << "num should be 1.";
+  CHECK_EQ(blob->channels(), 1) << "channels should be 1.";
+  CHECK_EQ(blob->height(), blob->width()) << "Only support square matrix.";
+  // Initialize blob as a zero-matrix
+  Dtype* data = blob->mutable_cpu_data();
+  caffe_set(blob->count(), Dtype(0.), data);
+  int height = blob->height();
+  for (int i = 0; i < height; ++i) {
+    data[i * height + i] = value;
+  }
+}
+template void read_into_the_diagonal(float value, Blob<float>* blob);
+template void read_into_the_diagonal(double value, Blob<double>* blob);
 
 
 template <typename Dtype>
