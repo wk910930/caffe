@@ -27,7 +27,6 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();
-  count_ = bottom[0]->count();
   num_pixels_ = height_ * width_;
   // Check spatial dim between unary term and image
   CHECK_EQ(num_, bottom[2]->num())

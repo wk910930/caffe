@@ -47,7 +47,6 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   void compute_spatial_kernel();
   void compute_bilateral_kernel(const Dtype* image_features);
 
-  int count_;
   int num_;
   int channels_;
   int height_;
