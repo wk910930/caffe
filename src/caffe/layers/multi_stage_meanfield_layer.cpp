@@ -10,11 +10,9 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   const caffe::MultiStageMeanfieldParameter& meanfield_param =
       this->layer_param_.multi_stage_meanfield_param();
-
   num_iterations_ = meanfield_param.num_iterations();
   CHECK_GT(num_iterations_, 1)
       << "Number of iterations must be greater than 1.";
-
   // bandwidth values of Gaussian kernels
   theta_alpha_ = meanfield_param.theta_alpha();
   theta_beta_ = meanfield_param.theta_beta();
@@ -34,12 +32,13 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   // Check spatial dim between unary term and image
   CHECK_EQ(num_, bottom[2]->num())
       << "num does not match between unary term and image";
-  CHECK_EQ(3, bottom[2]->channels())
-      << "only support 3-channel image";
   CHECK_EQ(height_, bottom[2]->height())
       << "height does not match between unary term and image";
   CHECK_EQ(width_, bottom[2]->width())
       << "width does not match between unary term and image";
+
+  spatial_dim_ = 2;
+  bilateral_dim_ = 2 + bottom[2]->channels();
 
   // Check if we need to set up the weights
   if (this->blobs_.size() > 0) {
@@ -104,7 +103,7 @@ void MultiStageMeanfieldLayer<Dtype>::Reshape(
  *
  * bottom[0] - Unary terms
  * bottom[1] - Softmax input/Output from the previous iteration (a copy of the unary terms if this is the first stage).
- * bottom[2] - RGB images
+ * bottom[2] - Image features (e.g. RGB image)
  *
  * top[0] - Output of the mean field inference (not normalized).
  */
@@ -117,10 +116,10 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
   bilateral_lattices_.clear();
   bilateral_lattices_.resize(num_);
   for (int n = 0; n < num_; ++n) {
-    const Dtype* rgb_data = bottom[2]->cpu_data() + bottom[2]->offset(n);
-    compute_bilateral_kernel(rgb_data);
+    const Dtype* image_features = bottom[2]->cpu_data() + bottom[2]->offset(n);
+    compute_bilateral_kernel(image_features);
     bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
-    bilateral_lattices_[n]->init(bilateral_kernel_buffer_, 5, num_pixels_);
+    bilateral_lattices_[n]->init(bilateral_kernel_buffer_, bilateral_dim_, num_pixels_);
     // Calculate bilateral filter normalization factors.
     Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() +
         bilateral_norms_.offset(n);
@@ -196,13 +195,12 @@ template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
   // Initialize the spatial lattice.
   // This does not need to be computed for each image for the fixed size.
-  int spatial_dim = 2;
-  spatial_kernel_buffer_ = new Dtype[spatial_dim * num_pixels_];
+  spatial_kernel_buffer_ = new Dtype[spatial_dim_ * num_pixels_];
   spatial_norm_.Reshape(1, 1, height_, width_);
 
   spatial_lattice_.reset(new ModifiedPermutohedral<Dtype>());
   compute_spatial_kernel();
-  spatial_lattice_->init(spatial_kernel_buffer_, spatial_dim, num_pixels_);
+  spatial_lattice_->init(spatial_kernel_buffer_, spatial_dim_, num_pixels_);
   spatial_lattice_->compute(spatial_norm_.mutable_cpu_data(), norm_feed_, 1);
 
   for (int i = 0; i < num_pixels_; ++i) {
@@ -213,38 +211,34 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::init_bilateral_buffers() {
-  int bilateral_dim = 5;
-  bilateral_kernel_buffer_ = new Dtype[bilateral_dim * num_pixels_];
+  bilateral_kernel_buffer_ = new Dtype[bilateral_dim_ * num_pixels_];
   bilateral_norms_.Reshape(num_, 1, height_, width_);
 }
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::compute_bilateral_kernel(
-    const Dtype* rgb_data) {
-  int bilateral_dim = 5;
-  caffe_set(bilateral_dim * num_pixels_, Dtype(0), bilateral_kernel_buffer_);
+    const Dtype* image_features) {
+  caffe_set(bilateral_dim_ * num_pixels_, Dtype(0), bilateral_kernel_buffer_);
   for (int p = 0; p < num_pixels_; ++p) {
-    bilateral_kernel_buffer_[bilateral_dim * p + 0] =
+    bilateral_kernel_buffer_[bilateral_dim_ * p + 0] =
         static_cast<Dtype>(p % width_) / theta_alpha_;
-    bilateral_kernel_buffer_[bilateral_dim * p + 1] =
+    bilateral_kernel_buffer_[bilateral_dim_ * p + 1] =
         static_cast<Dtype>(p / width_) / theta_alpha_;
-    bilateral_kernel_buffer_[bilateral_dim * p + 2] =
-        static_cast<Dtype>((rgb_data + num_pixels_ * 0)[p]) / theta_beta_;
-    bilateral_kernel_buffer_[bilateral_dim * p + 3] =
-        static_cast<Dtype>((rgb_data + num_pixels_ * 1)[p]) / theta_beta_;
-    bilateral_kernel_buffer_[bilateral_dim * p + 4] =
-        static_cast<Dtype>((rgb_data + num_pixels_ * 2)[p]) / theta_beta_;
+    // Appearance
+    for (int c = 0; c < bilateral_dim_ - 2; ++c) {
+      bilateral_kernel_buffer_[bilateral_dim_ * p + 2 + c] =
+        static_cast<Dtype>((image_features + num_pixels_ * c)[p]) / theta_beta_;
+    }
   }
 }
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::compute_spatial_kernel() {
-  int spatial_dim = 2;
-  caffe_set(spatial_dim * num_pixels_, Dtype(0), spatial_kernel_buffer_);
+  caffe_set(spatial_dim_ * num_pixels_, Dtype(0), spatial_kernel_buffer_);
   for (int p = 0; p < num_pixels_; ++p) {
-    spatial_kernel_buffer_[spatial_dim * p + 0] =
+    spatial_kernel_buffer_[spatial_dim_ * p + 0] =
         static_cast<Dtype>(p % width_) / theta_gamma_;
-    spatial_kernel_buffer_[spatial_dim * p + 1] =
+    spatial_kernel_buffer_[spatial_dim_ * p + 1] =
         static_cast<Dtype>(p / width_) / theta_gamma_;
   }
 }

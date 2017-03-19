@@ -45,7 +45,7 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   void init_spatial_lattice();
   void init_bilateral_buffers();
   void compute_spatial_kernel();
-  void compute_bilateral_kernel(const Dtype* rgb_data);
+  void compute_bilateral_kernel(const Dtype* image_features);
 
   int count_;
   int num_;
@@ -53,6 +53,9 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   int height_;
   int width_;
   int num_pixels_;
+
+  int spatial_dim_;
+  int bilateral_dim_;
 
   float eps_;
 
