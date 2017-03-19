@@ -31,7 +31,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(
   }
 }
 
-template<typename Dtype>
+template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Backward_gpu(
     const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
