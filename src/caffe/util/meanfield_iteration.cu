@@ -44,7 +44,8 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
           bilateral_out_data + channel_id * num_pixels_);
     }
   }
-  caffe_gpu_set(count_, Dtype(0.), message_passing_.mutable_gpu_data());
+  caffe_gpu_set(message_passing_.count(), Dtype(0.),
+      message_passing_.mutable_gpu_data());
   for (int n = 0; n < num_; ++n) {
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans,
         channels_, num_pixels_, channels_,
@@ -80,7 +81,7 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
   sum_layer_->Forward(sum_bottom_vec_, sum_top_vec_);
 }
 
-template<typename Dtype>
+template <typename Dtype>
 void MeanfieldIteration<Dtype>::Backward_gpu() {
   /*-------------------- Add unary gradient --------------------*/
   vector<bool> eltwise_propagate_down(sum_bottom_vec_.size(), true);

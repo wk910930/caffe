@@ -56,7 +56,6 @@ class MeanfieldIteration {
   /** The vector that stores the learnable parameters as a set of blobs. */
   vector<shared_ptr<Blob<Dtype> > > blobs_;
 
-  int count_;
   int num_;
   int channels_;
   int height_;

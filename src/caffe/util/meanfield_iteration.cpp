@@ -14,7 +14,6 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
     Blob<Dtype>* output_blob,
     const shared_ptr<ModifiedPermutohedral<Dtype> >& spatial_lattice,
     const Blob<Dtype>& spatial_norm) {
-  count_ = unary_terms->count();
   num_ = unary_terms->num();
   channels_ = unary_terms->channels();
   height_ = unary_terms->height();
@@ -40,8 +39,8 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
 
   // Addition configuration
   sum_bottom_vec_.clear();
-  sum_bottom_vec_.push_back(unary_terms);
-  sum_bottom_vec_.push_back(&pairwise_);
+  sum_bottom_vec_.push_back(unary_terms);  // unary term
+  sum_bottom_vec_.push_back(&pairwise_);  // pairwise term
   sum_top_vec_.clear();
   sum_top_vec_.push_back(output_blob);
   LayerParameter sum_param;
@@ -117,7 +116,8 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
           bilateral_out_data + channel_id * num_pixels_);
     }
   }
-  caffe_set(count_, Dtype(0.), message_passing_.mutable_cpu_data());
+  caffe_set(message_passing_.count(), Dtype(0.),
+      message_passing_.mutable_cpu_data());
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans,
         channels_, num_pixels_, channels_,
@@ -153,7 +153,7 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
   sum_layer_->Forward(sum_bottom_vec_, sum_top_vec_);
 }
 
-template<typename Dtype>
+template <typename Dtype>
 void MeanfieldIteration<Dtype>::Backward_cpu() {
   /*-------------------- Add unary gradient --------------------*/
   vector<bool> eltwise_propagate_down(sum_bottom_vec_.size(), true);
