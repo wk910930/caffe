@@ -9,16 +9,19 @@ namespace caffe {
 
 template <typename Dtype>
 void read_into_the_diagonal(const std::string& source, Blob<Dtype>* blob) {
+  // Diagonal matrix must be square
+  CHECK_EQ(blob->height(), blob->width()) << "Only support square matrix.";
+  // Initialize blob as a zero-matrix
   Dtype* data = blob->mutable_cpu_data();
   caffe_set(blob->count(), Dtype(0.), data);
 
   std::stringstream iss;
   iss.clear();
   iss << source;
-  std::string token;
 
   int height = blob->height();
   for (int i = 0; i < height; ++i) {
+    std::string token;
     if (std::getline(iss, token, ' ')) {
       data[i * height + i] = std::stof(token);
     } else {
@@ -31,28 +34,6 @@ template void read_into_the_diagonal(const std::string& source,
     Blob<float>* blob);
 template void read_into_the_diagonal(const std::string& source,
     Blob<double>* blob);
-
-
-template <typename Dtype>
-void PrintBlob(const Blob<Dtype>& blob, bool print_diff = false) {
-  const Dtype* data = print_diff ? blob.cpu_diff() : blob.cpu_data();
-  for (int n = 0; n < blob.num(); n++) {
-    for (int c = 0; c < blob.channels(); c++) {
-      for (int h = 0; h < blob.height(); h++) {
-        for (int w = 0; w < blob.width(); w++) {
-          int offset = ((n * blob.channels() + c) * blob.height() + h)
-              * blob.width() + w;
-          printf("%11.6f ", *(data + offset));
-        }
-        std::cout << std::endl;
-      }
-      std::cout << std::endl;
-    }
-  }
-  std::cout << "-- End of Blob --" << std::endl;
-}
-template void PrintBlob(const Blob<float>& blob, bool print_diff = false);
-template void PrintBlob(const Blob<double>& blob, bool print_diff = false);
 
 
 template <typename Dtype>
