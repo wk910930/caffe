@@ -50,7 +50,10 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   norm_feed_ = new Dtype[num_pixels_];
   caffe_set(num_pixels_, Dtype(1.0), norm_feed_);
 
+  // Initialize the spatial lattice.
+  // This does not need to be computed for each image for the fixed size.
   init_spatial_lattice();
+
   // Allocate space for bilateral kernels.
   // This is a temporary buffer used to compute bilateral lattices later.
   // Also allocate space for holding bilateral filter normalization values.
@@ -193,8 +196,6 @@ void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
 
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
-  // Initialize the spatial lattice.
-  // This does not need to be computed for each image for the fixed size.
   spatial_kernel_buffer_ = new Dtype[spatial_dim_ * num_pixels_];
   spatial_norm_.Reshape(1, 1, height_, width_);
 
