@@ -74,7 +74,7 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
         this->blobs_[2]->gpu_data(),
         message_passing_.gpu_data() + message_passing_.offset(n),
         Dtype(0.),
-        pairwise_.mutable_gpu_data() + pairwise_.offset(n));
+        pairwise_terms_.mutable_gpu_data() + pairwise_terms_.offset(n));
   }
 
   /*-------------------- Adding unary --------------------*/
@@ -94,7 +94,7 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
         channels_, channels_, num_pixels_,
         Dtype(1.),
-        pairwise_.gpu_diff() + pairwise_.offset(n),
+        pairwise_terms_.gpu_diff() + pairwise_terms_.offset(n),
         message_passing_.gpu_data() + message_passing_.offset(n),
         Dtype(1.),
         this->blobs_[2]->mutable_gpu_diff());
@@ -106,7 +106,7 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
         channels_, num_pixels_, channels_,
         Dtype(1.),
         this->blobs_[2]->gpu_data(),
-        pairwise_.gpu_diff() + pairwise_.offset(n),
+        pairwise_terms_.gpu_diff() + pairwise_terms_.offset(n),
         Dtype(0.),
         message_passing_.mutable_gpu_diff() + message_passing_.offset(n));
   }

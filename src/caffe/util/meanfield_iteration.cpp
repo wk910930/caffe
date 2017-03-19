@@ -32,15 +32,15 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
     blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   }
 
-  pairwise_.Reshape(num_, channels_, height_, width_);
+  pairwise_terms_.Reshape(num_, channels_, height_, width_);
   spatial_out_blob_.Reshape(num_, channels_, height_, width_);
   bilateral_out_blob_.Reshape(num_, channels_, height_, width_);
   message_passing_.Reshape(num_, channels_, height_, width_);
 
   // Addition configuration
   sum_bottom_vec_.clear();
-  sum_bottom_vec_.push_back(unary_terms);  // unary term
-  sum_bottom_vec_.push_back(&pairwise_);  // pairwise term
+  sum_bottom_vec_.push_back(unary_terms);  // unary terms
+  sum_bottom_vec_.push_back(&pairwise_terms_);  // pairwise terms
   sum_top_vec_.clear();
   sum_top_vec_.push_back(output_blob);
   LayerParameter sum_param;
@@ -146,7 +146,7 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
         this->blobs_[2]->cpu_data(),
         message_passing_.cpu_data() + message_passing_.offset(n),
         Dtype(0.),
-        pairwise_.mutable_cpu_data() + pairwise_.offset(n));
+        pairwise_terms_.mutable_cpu_data() + pairwise_terms_.offset(n));
   }
 
   /*-------------------- Adding unary --------------------*/
@@ -166,7 +166,7 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
         channels_, channels_, num_pixels_,
         Dtype(1.),
-        pairwise_.cpu_diff() + pairwise_.offset(n),
+        pairwise_terms_.cpu_diff() + pairwise_terms_.offset(n),
         message_passing_.cpu_data() + message_passing_.offset(n),
         Dtype(1.),
         this->blobs_[2]->mutable_cpu_diff());
@@ -178,7 +178,7 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
         channels_, num_pixels_, channels_,
         Dtype(1.),
         this->blobs_[2]->cpu_data(),
-        pairwise_.cpu_diff() + pairwise_.offset(n),
+        pairwise_terms_.cpu_diff() + pairwise_terms_.offset(n),
         Dtype(0.),
         message_passing_.mutable_cpu_diff() + message_passing_.offset(n));
   }

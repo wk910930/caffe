@@ -62,9 +62,9 @@ class MeanfieldIteration {
   int width_;
   int num_pixels_;
 
+  Blob<Dtype> pairwise_terms_;
   Blob<Dtype> spatial_out_blob_;
   Blob<Dtype> bilateral_out_blob_;
-  Blob<Dtype> pairwise_;
   Blob<Dtype> softmax_input_;
   Blob<Dtype> softmax_output_;
   Blob<Dtype> message_passing_;
