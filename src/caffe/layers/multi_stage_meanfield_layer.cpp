@@ -150,8 +150,8 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
       split_layer_bottom_vec_);
   // Accumulate diffs from mean field iterations.
   for (int blob_id = 0; blob_id < this->blobs_.size(); ++blob_id) {
-    Blob<Dtype>* cur_blob = this->blobs_[blob_id].get();
     if (this->param_propagate_down_[blob_id]) {
+      Blob<Dtype>* cur_blob = this->blobs_[blob_id].get();
       caffe_set(cur_blob->count(), Dtype(0), cur_blob->mutable_cpu_diff());
       for (int i = 0; i < num_iterations_; ++i) {
         const Dtype* diffs_to_add =
