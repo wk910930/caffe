@@ -6,9 +6,9 @@
 
 namespace caffe {
 
-/************************************************/
-/***          ModifiedPermutohedral Lattice    ***/
-/************************************************/
+/********************************************/
+/***    ModifiedPermutohedral Lattice    ***/
+/********************************************/
 
 template <typename Dtype>
 void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
@@ -87,7 +87,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
       rank[i] = 0;
     }
     for (int i = 0; i < d_; ++i) {
-      double di = elevated[i] - rem0[i];
+      Dtype di = elevated[i] - rem0[i];
       for (int j = i+1; j <= d_; ++j) {
         if (di < elevated[j] - rem0[j]) {
           rank[i]++;
