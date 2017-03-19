@@ -58,8 +58,6 @@ class MeanfieldIteration {
 
   int num_;
   int channels_;
-  int height_;
-  int width_;
   int num_pixels_;
 
   Blob<Dtype> pairwise_terms_;

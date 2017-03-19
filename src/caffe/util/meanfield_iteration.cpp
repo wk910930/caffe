@@ -16,9 +16,7 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
     const Blob<Dtype>& spatial_norm) {
   num_ = unary_terms->num();
   channels_ = unary_terms->channels();
-  height_ = unary_terms->height();
-  width_ = unary_terms->width();
-  num_pixels_ = height_ * width_;
+  num_pixels_ = unary_terms->height() * unary_terms->width();
 
   if (this->blobs_.size() > 0) {
     LOG(INFO) << "Meanfield iteration skipping parameter initialization.";
@@ -32,10 +30,10 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
     blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   }
 
-  pairwise_terms_.Reshape(num_, channels_, height_, width_);
-  spatial_out_blob_.Reshape(num_, channels_, height_, width_);
-  bilateral_out_blob_.Reshape(num_, channels_, height_, width_);
-  message_passing_.Reshape(num_, channels_, height_, width_);
+  pairwise_terms_.ReshapeLike(*unary_terms);
+  spatial_out_blob_.ReshapeLike(*unary_terms);
+  bilateral_out_blob_.ReshapeLike(*unary_terms);
+  message_passing_.ReshapeLike(*unary_terms);
 
   // Addition configuration
   sum_bottom_vec_.clear();
