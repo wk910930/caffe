@@ -12,9 +12,9 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
   /*-------------------- Normalization --------------------*/
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
-  /*-------------------- Message passing --------------------*/
+  /*-------------------- Message Passing --------------------*/
   for (int n = 0; n < num_; ++n) {
-    // spatial kernel
+    // Gaussian filters: spatial
     Dtype* spatial_out_cpu_data = spatial_out_blob_.mutable_cpu_data() +
         spatial_out_blob_.offset(n);
     const Dtype* prob_input_data = softmax_output_.cpu_data() +
@@ -29,7 +29,7 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
           spatial_out_data + channel_id * num_pixels_,
           spatial_out_data + channel_id * num_pixels_);
     }
-    // bilateral kernel
+    // Gaussian filters: bilateral
     Dtype* bilateral_out_cpu_data = bilateral_out_blob_.mutable_cpu_data() +
         bilateral_out_blob_.offset(n);
     bilateral_lattices_[n]->compute(bilateral_out_cpu_data, prob_input_data,
@@ -44,6 +44,8 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
           bilateral_out_data + channel_id * num_pixels_);
     }
   }
+
+  /*-------------------- Weighting Filter Outputs --------------------*/
   caffe_gpu_set(message_passing_.count(), Dtype(0.),
       message_passing_.mutable_gpu_data());
   for (int n = 0; n < num_; ++n) {
@@ -65,8 +67,7 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
         message_passing_.mutable_gpu_data() + message_passing_.offset(n));
   }
 
-  /*-------------------- Compatibility Transformation --------------------*/
-  // Multiply message passing with compatibility values.
+  /*-------------------- Compatibility Transform --------------------*/
   for (int n = 0; n < num_; ++n) {
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans,
         channels_, num_pixels_, channels_,
@@ -77,7 +78,7 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
         pairwise_terms_.mutable_gpu_data() + pairwise_terms_.offset(n));
   }
 
-  /*-------------------- Adding unary --------------------*/
+  /*-------------------- Adding Unary Potentials --------------------*/
   sum_layer_->Forward(sum_bottom_vec_, sum_top_vec_);
 }
 
