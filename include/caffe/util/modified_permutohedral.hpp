@@ -7,9 +7,9 @@
 
 namespace caffe {
 
-/************************************************/
-/***          ModifiedPermutohedral Lattice   ***/
-/************************************************/
+/***********************************************/
+/***      ModifiedPermutohedral Lattice      ***/
+/***********************************************/
 
 template <typename Dtype>
 class ModifiedPermutohedral {
@@ -29,16 +29,14 @@ class ModifiedPermutohedral {
 
   std::vector<int> offset_;
   std::vector<int> rank_;
-  std::vector<float> barycentric_;
+  std::vector<Dtype> barycentric_;
   std::vector<Neighbors> blur_neighbors_;
 
-  // Number of elements, size of sparse discretized space,
-  // dimension of features width and height
-  int N_ = 0;
-  int M_ = 0;
-  int d_ = 0;
-  int w_ = 0;
-  int h_ = 0;
+  int N_ = 0;  // number of elements
+  int M_ = 0;  // size of sparse discretized space
+  int d_ = 0;  // dimension of features
+  int w_ = 0;  // width
+  int h_ = 0;  // height
 };
 
 }  // namespace caffe

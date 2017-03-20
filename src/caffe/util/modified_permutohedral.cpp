@@ -30,7 +30,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   Dtype* rem0 = new Dtype[d_+1];
   Dtype* barycentric = new Dtype[d_+2];
   int* rank = new int[d_+1];
-  int* canonical = new int[(d_+1)*(d_+1)];
+  int* canonical = new int[(d_+1) * (d_+1)];
   int* key = new int[d_+1];
 
   // Compute the canonical simplex
@@ -47,17 +47,17 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   Dtype inv_std_dev = sqrt(2.0 / 3.0) * (d_+1);
   // Compute the diagonal part of E (p.5 in [Adams etal 2010])
   for (int i = 0; i < d_; ++i) {
-    scale_factor[i] = 1.0 / sqrt(static_cast<double>((i+2)*(i+1)))
+    scale_factor[i] = Dtype(1.) / sqrt(Dtype((i+2) * (i+1)))
         * inv_std_dev;
   }
   // Compute the simplex each feature lies in
   for (int k = 0; k < N_; ++k) {
     // Elevate the features ( y = Ep, see p.5 in [Adams etal 2010])
-    const Dtype* f = features + k * num_dimensions;
+    const Dtype* feat = features + k * num_dimensions;
     // sm contains the sum of 1..n of our feature vector
     Dtype sm = 0;
-    for (int j = d_; j > 0; j--) {
-      Dtype cf = f[j-1] * scale_factor[j-1];
+    for (int j = d_; j > 0; --j) {
+      Dtype cf = feat[j - 1] * scale_factor[j - 1];
       elevated[j] = sm - j * cf;
       sm += cf;
     }
@@ -122,7 +122,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     // Compute all vertices and their offset
     for (int remainder = 0; remainder <= d_; ++remainder) {
       for (int i = 0; i < d_; ++i) {
-        key[i] = rem0[i] + canonical[remainder*(d_+1) + rank[i]];
+        key[i] = rem0[i] + canonical[remainder * (d_+1) + rank[i]];
       }
       offset_[k*(d_+1) + remainder] = hash_table.find(key, true);
       rank_[k*(d_+1) + remainder] = rank[remainder];
@@ -175,7 +175,8 @@ void ModifiedPermutohedral<Dtype>::compute(Dtype* out, const Dtype* in,
   Dtype* new_values = new Dtype[(M_+2) * value_size];
 
   for (int i = 0; i < (M_+2) * value_size; ++i) {
-    values[i] = new_values[i] = 0;
+    values[i] = 0;
+    new_values[i] = 0;
   }
   // Splatting
   for (int i = 0;  i < N_; ++i) {
@@ -204,7 +205,7 @@ void ModifiedPermutohedral<Dtype>::compute(Dtype* out, const Dtype* in,
   }
   // Alpha is a magic scaling constant
   // (write Andrew if you really wanna understand this)
-  Dtype alpha = 1.0f / (1+powf(2, -d_));
+  Dtype alpha = Dtype(1.) / (Dtype(1.) + pow(Dtype(2.), Dtype(-d_)));
   // Slicing
   for (int i = 0; i < N_; ++i) {
     if  (!add) {
