@@ -112,7 +112,6 @@ void MultiStageMeanfieldLayer<Dtype>::Reshape(
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
-  split_layer_bottom_vec_[0] = bottom[0];
   split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
   // Initialize the bilateral lattices.
   bilateral_lattices_.clear();
