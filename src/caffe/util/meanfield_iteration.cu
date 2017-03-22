@@ -14,11 +14,11 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
 
   /*-------------------- Message Passing --------------------*/
   for (int n = 0; n < num_; ++n) {
+    const Dtype* prob_input_data = softmax_output_.cpu_data() +
+        softmax_output_.offset(n);
     // Gaussian filters: spatial
     Dtype* spatial_out_cpu_data = spatial_out_blob_.mutable_cpu_data() +
         spatial_out_blob_.offset(n);
-    const Dtype* prob_input_data = softmax_output_.cpu_data() +
-        softmax_output_.offset(n);
     spatial_lattice_->compute(spatial_out_cpu_data, prob_input_data, channels_);
     Dtype* spatial_out_data = spatial_out_blob_.mutable_gpu_data() +
         spatial_out_blob_.offset(n);
