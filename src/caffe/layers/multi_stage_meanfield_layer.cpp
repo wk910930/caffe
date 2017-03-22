@@ -65,7 +65,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   split_layer_bottom_vec_.push_back(bottom[0]);
   split_layer_top_vec_.clear();
   split_layer_out_blobs_.resize(num_iterations_);
-  for (int i = 0; i < num_iterations_; i++) {
+  for (int i = 0; i < num_iterations_; ++i) {
     split_layer_out_blobs_[i].reset(new Blob<Dtype>());
     split_layer_top_vec_.push_back(split_layer_out_blobs_[i].get());
   }
