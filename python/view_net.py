@@ -64,11 +64,13 @@ if __name__ == '__main__':
     # Display params
     if args.layer_name is not None:
         print ''
+        np.set_printoptions(linewidth=160)
         np.set_printoptions(suppress=True)
-        np.set_printoptions(precision=2)
+        np.set_printoptions(precision=1)
         for layer_name, param in net.params.iteritems():
             if layer_name == args.layer_name:
                 print 'Showing [{}]'.format(layer_name)
                 for i in xrange(len(param)):
                     print '>> blob[{}].shape={}'.format(i, param[i].data.shape)
                     print param[i].data
+                    print ''
