@@ -22,13 +22,6 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
     spatial_lattice_->compute(spatial_out_cpu_data, prob_input_data, channels_);
     Dtype* spatial_out_data = spatial_out_blob_.mutable_gpu_data() +
         spatial_out_blob_.offset(n);
-    // Pixel-wise normalization.
-    for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_gpu_mul(num_pixels_,
-          spatial_norm_.gpu_data(),
-          spatial_out_data + channel_id * num_pixels_,
-          spatial_out_data + channel_id * num_pixels_);
-    }
     // Gaussian filters: bilateral
     Dtype* bilateral_out_cpu_data = bilateral_out_blob_.mutable_cpu_data() +
         bilateral_out_blob_.offset(n);
@@ -38,6 +31,10 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
         bilateral_out_blob_.offset(n);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
+      caffe_gpu_mul(num_pixels_,
+          spatial_norm_.gpu_data(),
+          spatial_out_data + channel_id * num_pixels_,
+          spatial_out_data + channel_id * num_pixels_);
       caffe_gpu_mul(num_pixels_,
           bilateral_norms_.gpu_data() + bilateral_norms_.offset(n),
           bilateral_out_data + channel_id * num_pixels_,
@@ -163,16 +160,13 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
   for (int n = 0; n < num_; ++n) {
     Dtype* spatial_out_diff = spatial_out_blob_.mutable_gpu_diff() +
         spatial_out_blob_.offset(n);
+    Dtype* bilateral_out_diff = bilateral_out_blob_.mutable_gpu_diff() +
+        bilateral_out_blob_.offset(n);
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_gpu_mul(num_pixels_,
           spatial_norm_.gpu_data(),
           spatial_out_diff + channel_id * num_pixels_,
           spatial_out_diff + channel_id * num_pixels_);
-    }
-
-    Dtype* bilateral_out_diff = bilateral_out_blob_.mutable_gpu_diff() +
-        bilateral_out_blob_.offset(n);
-    for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_gpu_mul(num_pixels_,
           bilateral_norms_.gpu_data() + bilateral_norms_.offset(n),
           bilateral_out_diff + channel_id * num_pixels_,

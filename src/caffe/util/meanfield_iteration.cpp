@@ -94,13 +94,6 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
     const Dtype* prob_input_data = softmax_output_.cpu_data() +
         softmax_output_.offset(n);
     spatial_lattice_->compute(spatial_out_data, prob_input_data, channels_);
-    // Pixel-wise normalization.
-    for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_mul(num_pixels_,
-          spatial_norm_.cpu_data(),
-          spatial_out_data + channel_id * num_pixels_,
-          spatial_out_data + channel_id * num_pixels_);
-    }
     // Gaussian filters: bilateral
     Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data() +
         bilateral_out_blob_.offset(n);
@@ -108,6 +101,10 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
         channels_);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
+      caffe_mul(num_pixels_,
+          spatial_norm_.cpu_data(),
+          spatial_out_data + channel_id * num_pixels_,
+          spatial_out_data + channel_id * num_pixels_);
       caffe_mul(num_pixels_,
           bilateral_norms_.cpu_data() + bilateral_norms_.offset(n),
           bilateral_out_data + channel_id * num_pixels_,
@@ -233,16 +230,13 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
   for (int n = 0; n < num_; ++n) {
     Dtype* spatial_out_diff = spatial_out_blob_.mutable_cpu_diff() +
         spatial_out_blob_.offset(n);
+    Dtype* bilateral_out_diff = bilateral_out_blob_.mutable_cpu_diff() +
+        bilateral_out_blob_.offset(n);
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_,
           spatial_norm_.cpu_data(),
           spatial_out_diff + channel_id * num_pixels_,
           spatial_out_diff + channel_id * num_pixels_);
-    }
-
-    Dtype* bilateral_out_diff = bilateral_out_blob_.mutable_cpu_diff() +
-        bilateral_out_blob_.offset(n);
-    for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_,
           bilateral_norms_.cpu_data() + bilateral_norms_.offset(n),
           bilateral_out_diff + channel_id * num_pixels_,
