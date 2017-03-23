@@ -1,12 +1,11 @@
-#ifndef CAFFE_MEANFIELD_LAYER_HPP_
-#define CAFFE_MEANFIELD_LAYER_HPP_
+#ifndef CAFFE_MEANFIELD_ITERATION_HPP_
+#define CAFFE_MEANFIELD_ITERATION_HPP_
 
 #include <vector>
 
 #include "caffe/blob.hpp"
 #include "caffe/layers/eltwise_layer.hpp"
 #include "caffe/layers/softmax_layer.hpp"
-#include "caffe/proto/caffe.pb.h"
 #include "caffe/util/modified_permutohedral.hpp"
 
 namespace caffe {
@@ -27,7 +26,7 @@ class MeanfieldIteration {
   /**
    * Must be invoked before invoking {@link Forward_cpu()}
    */
-  virtual void PrePass(
+  void PrePass(
       const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
       const vector<shared_ptr<
           ModifiedPermutohedral<Dtype> > >& bilateral_lattices,
@@ -36,18 +35,20 @@ class MeanfieldIteration {
   /**
    * CPU Forward/Backward pass
    */
-  virtual void Forward_cpu();
-  virtual void Backward_cpu();
+  void Forward_cpu();
+  void Backward_cpu();
 
   /**
    * GPU Forward/Backward pass
    */
 #ifndef CPU_ONLY
-  virtual void Forward_gpu();
-  virtual void Backward_gpu();
+  void Forward_gpu();
+  void Backward_gpu();
 #endif
 
-  // A quick hack. This should be properly encapsulated.
+  /**
+   * @brief Returns the vector of learnable parameter blobs.
+   */
   vector<shared_ptr<Blob<Dtype> > >& blobs() {
     return blobs_;
   }
@@ -86,4 +87,4 @@ class MeanfieldIteration {
 
 }  // namespace caffe
 
-#endif  // CAFFE_MEANFIELD_LAYER_HPP_
+#endif  // CAFFE_MEANFIELD_ITERATION_HPP_
