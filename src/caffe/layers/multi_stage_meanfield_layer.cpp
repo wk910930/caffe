@@ -21,20 +21,20 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   eps_ = meanfield_param.eps();
 
   num_ = bottom[0]->num();
-  if (num_ > 1) {
-    LOG(INFO) << "This implementation has not been tested batch size > 1.";
-  }
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();
   num_pixels_ = height_ * width_;
-  // Check spatial dim between unary term and image
+  // Check spatial dim
   CHECK_EQ(num_, bottom[2]->num())
-      << "num does not match between unary term and image";
+      << "num does not match between unary term and image.";
   CHECK_EQ(height_, bottom[2]->height())
-      << "height does not match between unary term and image";
+      << "height does not match between unary term and image.";
   CHECK_EQ(width_, bottom[2]->width())
-      << "width does not match between unary term and image";
+      << "width does not match between unary term and image.";
+  if (bottom[0]->shape() != bottom[1]->shape()) {
+    LOG(FATAL) << "The size of unary and pairwise terms don't match.";
+  }
 
   spatial_dim_ = 2;
   bilateral_dim_ = 2 + bottom[2]->channels();
