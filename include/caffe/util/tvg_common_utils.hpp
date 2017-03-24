@@ -59,7 +59,7 @@ template void read_into_the_diagonal(double value, Blob<double>* blob);
 template <typename Dtype>
 void FillAsRGB(Blob<Dtype>* blob) {
   for (int i = 0; i < blob->count(); ++i) {
-    blob->mutable_cpu_data()[i] = caffe_rng_rand() % 256;
+    blob->mutable_cpu_data()[i] = Dtype(caffe_rng_rand() % 256);
   }
 }
 template void FillAsRGB(Blob<float>* blob);
@@ -69,8 +69,8 @@ template void FillAsRGB(Blob<double>* blob);
 template <typename Dtype>
 void FillAsProb(Blob<Dtype>* blob) {
   for (int i = 0; i < blob->count(); ++i) {
-    double num = static_cast<double>(caffe_rng_rand()) / RAND_MAX;
-    blob->mutable_cpu_data()[i] = static_cast<Dtype>((num != 0) ? num : 0.0002);
+    Dtype num = static_cast<Dtype>(caffe_rng_rand()) / RAND_MAX;
+    blob->mutable_cpu_data()[i] = static_cast<Dtype>((num != Dtype(0.)) ? num : Dtype(0.0002));
   }
   for (int n = 0; n < blob->num(); ++n) {
     for (int h = 0; h < blob->height(); ++h) {
