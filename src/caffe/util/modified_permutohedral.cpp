@@ -6,10 +6,6 @@
 
 namespace caffe {
 
-/********************************************/
-/***    ModifiedPermutohedral Lattice    ***/
-/********************************************/
-
 template <typename Dtype>
 void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     int num_dimensions, int num_points) {
@@ -17,7 +13,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   // There is going to be a lot of magic here
   N_ = num_points;
   d_ = num_dimensions;
-  HashTableCopy hash_table(d_, N_*(d_+1));
+  HashTableCopy hash_table(d_, (d_+1) * N_);
 
   // Allocate the class memory
   offset_.resize((d_+1) * N_);
@@ -44,7 +40,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   }
 
   // Expected standard deviation of our filter (p.6 in [Adams etal 2010])
-  Dtype inv_std_dev = sqrt(2.0 / 3.0) * (d_+1);
+  Dtype inv_std_dev = sqrt(Dtype(2.) / Dtype(3.)) * (d_+1);
   // Compute the diagonal part of E (p.5 in [Adams etal 2010])
   for (int i = 0; i < d_; ++i) {
     scale_factor[i] = Dtype(1.) / sqrt(Dtype((i+2) * (i+1)))
@@ -55,7 +51,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     // Elevate the features ( y = Ep, see p.5 in [Adams etal 2010])
     const Dtype* feat = features + k * num_dimensions;
     // sm contains the sum of 1..n of our feature vector
-    Dtype sm = 0;
+    Dtype sm = Dtype(0.);
     for (int j = d_; j > 0; --j) {
       Dtype cf = feat[j - 1] * scale_factor[j - 1];
       elevated[j] = sm - j * cf;
@@ -64,7 +60,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     elevated[0] = sm;
 
     // Find the closest 0-colored simplex through rounding
-    Dtype down_factor = 1.0f / (d_ + 1);
+    Dtype down_factor = Dtype(1.) / (d_ + 1);
     Dtype up_factor = d_ + 1;
     int sum = 0;
     for (int i = 0; i <= d_; ++i) {
@@ -109,7 +105,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     }
     // Compute the barycentric coordinates (p.10 in [Adams etal 2010])
     for (int i = 0; i <= d_+1; ++i) {
-      barycentric[i] = 0;
+      barycentric[i] = Dtype(0.);
     }
     for (int i = 0; i <= d_; ++i) {
       Dtype v = (elevated[i] - rem0[i]) * down_factor;
@@ -137,7 +133,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   delete [] canonical;
   delete [] key;
 
-  // Find the Neighbors of each lattice point
+  /*---------- Find the Neighbors of each lattice point ----------*/
 
   // Get the number of vertices in the lattice
   M_ = hash_table.size();
@@ -181,20 +177,20 @@ void ModifiedPermutohedral<Dtype>::compute(Dtype* out, const Dtype* in,
   // Splatting
   for (int i = 0;  i < N_; ++i) {
     for (int j = 0; j <= d_; ++j) {
-      int o = offset_[i*(d_+1) + j] + 1;
-      Dtype w = barycentric_[i*(d_+1) + j];
+      int o = offset_[i * (d_+1) + j] + 1;
+      Dtype w = barycentric_[i * (d_+1) + j];
       for (int k = 0; k < value_size; k++) {
         values[o * value_size + k] += w * in[k * N_ + i];
       }
     }
   }
-  for (int j = reverse ? d_ : 0; j <= d_ && j >= 0; reverse ? j-- : j++) {
+  for (int j = reverse ? d_ : 0; j <= d_ && j >= 0; reverse ? --j : ++j) {
     for (int i = 0; i < M_; ++i) {
       Dtype* old_val = values + (i+1) * value_size;
       Dtype* new_val = new_values + (i+1) * value_size;
 
-      int n1 = blur_neighbors_[j*M_+i].n1 + 1;
-      int n2 = blur_neighbors_[j*M_+i].n2 + 1;
+      int n1 = blur_neighbors_[j * M_ + i].n1 + 1;
+      int n2 = blur_neighbors_[j * M_ + i].n2 + 1;
       Dtype* n1_val = values + n1 * value_size;
       Dtype* n2_val = values + n2 * value_size;
       for (int k = 0; k < value_size; ++k) {

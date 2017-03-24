@@ -7,15 +7,9 @@
 
 namespace caffe {
 
-/***********************************************/
-/***      ModifiedPermutohedral Lattice      ***/
-/***********************************************/
-
 template <typename Dtype>
 class ModifiedPermutohedral {
  public:
-  ModifiedPermutohedral() {}
-
   void init(const Dtype* features, int num_dimensions, int num_points);
   void compute(Dtype* out, const Dtype* in, int value_size,
       bool reverse = false, bool add = false) const;
@@ -24,7 +18,7 @@ class ModifiedPermutohedral {
   struct Neighbors{
     int n1;
     int n2;
-    Neighbors(int n1 = 0, int n2 = 0):n1(n1), n2(n2) {}
+    Neighbors(int n1 = 0, int n2 = 0) : n1(n1), n2(n2) {}
   };
 
   std::vector<int> offset_;
