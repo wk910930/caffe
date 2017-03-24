@@ -27,7 +27,6 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   virtual ~MultiStageMeanfieldLayer() {
     delete[] spatial_kernel_buffer_;
     delete[] bilateral_kernel_buffer_;
-    delete[] norm_feed_;
   }
 
  protected:
@@ -63,7 +62,7 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   Dtype theta_gamma_;
   int num_iterations_;
 
-  Dtype* norm_feed_;
+  Blob<Dtype> norm_feed_;
   Blob<Dtype> spatial_norm_;
   Blob<Dtype> bilateral_norms_;
 
