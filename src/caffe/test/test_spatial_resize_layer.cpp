@@ -13,7 +13,7 @@ class SpatialResizeLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   SpatialResizeLayerTest()
-      : blob_bottom_(new Blob<Dtype>(3, 5, 8, 8)),
+      : blob_bottom_(new Blob<Dtype>(3, 3, 256, 256)),
         blob_top_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     blob_bottom_vec_.push_back(blob_bottom_);
@@ -35,24 +35,22 @@ TYPED_TEST_CASE(SpatialResizeLayerTest, TestDtypesAndDevices);
 TYPED_TEST(SpatialResizeLayerTest, TestSetup) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  ResizeParameter* resize_param = layer_param.mutable_resize_param();
-  resize_param->set_height(4);
-  resize_param->set_width(4);
+  SpatialResizeParameter* spatial_resize_param =
+      layer_param.mutable_spatial_resize_param();
+  spatial_resize_param->set_height(32);
+  spatial_resize_param->set_width(32);
   SpatialResizeLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
 
   EXPECT_EQ(this->blob_top_->num(), 3);
-  EXPECT_EQ(this->blob_top_->channels(), 5);
-  EXPECT_EQ(this->blob_top_->height(), 4);
-  EXPECT_EQ(this->blob_top_->width(), 4);
+  EXPECT_EQ(this->blob_top_->channels(), 3);
+  EXPECT_EQ(this->blob_top_->height(), 32);
+  EXPECT_EQ(this->blob_top_->width(), 32);
 }
 
 TYPED_TEST(SpatialResizeLayerTest, TestForwardRGB) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  ResizeParameter* resize_param = layer_param.mutable_resize_param();
-  resize_param->set_height(8);
-  resize_param->set_width(8);
   SpatialResizeLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   // Fill the values
@@ -69,9 +67,6 @@ TYPED_TEST(SpatialResizeLayerTest, TestForwardRGB) {
 TYPED_TEST(SpatialResizeLayerTest, TestForwardProbs) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  ResizeParameter* resize_param = layer_param.mutable_resize_param();
-  resize_param->set_height(8);
-  resize_param->set_width(8);
   SpatialResizeLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   // Fill the values

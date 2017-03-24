@@ -534,10 +534,10 @@ message LayerParameter {
   optional ReductionParameter reduction_param = 136;
   optional ReLUParameter relu_param = 123;
   optional ReshapeParameter reshape_param = 133;
-  optional ResizeParameter resize_param = 508;
   optional ScaleParameter scale_param = 142;
   optional SigmoidParameter sigmoid_param = 124;
   optional SoftmaxParameter softmax_param = 125;
+  optional SpatialResizeParameter spatial_resize_param = 508;
   optional SPPParameter spp_param = 132;
   optional SliceParameter slice_param = 126;
   optional TanHParameter tanh_param = 127;
@@ -1739,6 +1739,21 @@ message WindowDataParameter {
   optional bool cache_images = 12 [default = false];
   // append root_folder to locate images
   optional string root_folder = 13 [default = ""];
+}
+
+message SpatialResizeParameter {
+  // Same as in OpenCV
+  enum InterpMode {
+    NEAREST = 1;
+    LINEAR = 2;
+    AREA = 3;
+    CUBIC = 4;
+    LANCZOS4 = 5;
+  }
+  optional InterpMode mode = 1 [default = LINEAR];
+
+  optional uint32 height = 2 [default = 0];
+  optional uint32 width =3 [default = 0];
 }
 
 message SPPParameter {

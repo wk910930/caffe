@@ -28,6 +28,8 @@ class SpatialResizeLayer : public Layer<Dtype> {
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
+  int cv_mat_type_;
+  int interp_mode_;
   int new_height_;
   int new_width_;
 };
