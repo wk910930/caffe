@@ -8,7 +8,7 @@ namespace caffe {
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
-  const caffe::MultiStageMeanfieldParameter& meanfield_param =
+  const MultiStageMeanfieldParameter& meanfield_param =
       this->layer_param_.multi_stage_meanfield_param();
   num_iterations_ = meanfield_param.num_iterations();
   CHECK_GT(num_iterations_, 1)
