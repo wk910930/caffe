@@ -159,8 +159,8 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
       blur_neighbors_[j * M_ + i].n2 = hash_table.find(n2);
     }
   }
-  delete[] n1;
-  delete[] n2;
+  delete [] n1;
+  delete [] n2;
 }
 
 template <typename Dtype>
@@ -217,8 +217,8 @@ void ModifiedPermutohedral<Dtype>::compute(Dtype* out, const Dtype* in,
       }
     }
   }
-  delete[] values;
-  delete[] new_values;
+  delete [] values;
+  delete [] new_values;
 }
 
 INSTANTIATE_CLASS(ModifiedPermutohedral);

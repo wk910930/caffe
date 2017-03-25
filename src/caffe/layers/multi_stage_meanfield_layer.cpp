@@ -126,7 +126,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
         bilateral_norms_.offset(n);
     bilateral_lattices_[n]->compute(norm_output_data, norm_feed_.cpu_data(), 1);
     for (int i = 0; i < num_pixels_; ++i) {
-      norm_output_data[i] = 1.0f / (norm_output_data[i] + eps_);
+      norm_output_data[i] = Dtype(1.) / (norm_output_data[i] + eps_);
     }
   }
   for (int i = 0; i < num_iterations_; ++i) {
@@ -199,7 +199,7 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
 
   for (int i = 0; i < num_pixels_; ++i) {
     spatial_norm_.mutable_cpu_data()[i] =
-        1.0f / (spatial_norm_.cpu_data()[i] + eps_);
+        Dtype(1.) / (spatial_norm_.cpu_data()[i] + eps_);
   }
 }
 

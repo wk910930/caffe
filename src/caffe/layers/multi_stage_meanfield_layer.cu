@@ -20,7 +20,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(
         bilateral_norms_.offset(n);
     bilateral_lattices_[n]->compute(norm_output_data, norm_feed_.cpu_data(), 1);
     for (int i = 0; i < num_pixels_; ++i) {
-      norm_output_data[i] = 1.0f / (norm_output_data[i] + eps_);
+      norm_output_data[i] = Dtype(1.) / (norm_output_data[i] + eps_);
     }
   }
   for (int i = 0; i < num_iterations_; ++i) {
