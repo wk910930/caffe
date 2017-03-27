@@ -35,7 +35,7 @@ if __name__ == '__main__':
     net = caffe.Net(args.prototxt, args.caffemodel, caffe.TEST)
 
     # PROTOTXT
-    print '==== NET ===='
+    print '============ NET ============'
     net_proto = caffe_pb2.NetParameter()
     text_format.Merge(open(args.prototxt).read(), net_proto)
     print net_proto
@@ -44,9 +44,11 @@ if __name__ == '__main__':
     # For each layer, check the activation shapes, which typically
     # have the form (batch_size, channel_dim, height, width).
     # The activations are exposed as an OrderedDict, net.blobs.
-    print '==== Activations ===='
+    print '============ Activations ============'
     for layer_name, blob in net.blobs.iteritems():
         print layer_name + '\t' + str(blob.data.shape)
+
+    print
 
     # PARAMETERS
     # The parameters are exposed as another OrderedDict, net.params.
@@ -54,7 +56,7 @@ if __name__ == '__main__':
     # The param shapes typically have the
     # form (output_channels, input_channels, filter_height, filter_width) (for the weights)
     # and the 1-dimensional shape (output_channels,) (for the biases).
-    print '==== Parameters ===='
+    print '============ Parameters ============'
     for layer_name, param in net.params.iteritems():
         item = layer_name + '\t'
         for i in xrange(len(param)):
