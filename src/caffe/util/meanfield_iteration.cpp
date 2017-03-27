@@ -68,7 +68,7 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::PrePass(
     const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
-    const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >& bilateral_lattices,
+    const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >& bilateral_lattices,  // NOLINT(whitespace/line_length)
     const Blob<Dtype>& bilateral_norms) {
   bilateral_lattices_ = bilateral_lattices;
   bilateral_norms_.CopyFrom(bilateral_norms, false, true);
