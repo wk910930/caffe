@@ -113,7 +113,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
       barycentric[d_ - rank[i] + 1] -= v;
     }
     // Wrap around
-    barycentric[0] += 1.0 + barycentric[d_+1];
+    barycentric[0] += Dtype(1.) + barycentric[d_+1];
 
     // Compute all vertices and their offset
     for (int remainder = 0; remainder <= d_; ++remainder) {
@@ -171,8 +171,8 @@ void ModifiedPermutohedral<Dtype>::compute(Dtype* out, const Dtype* in,
   Dtype* new_values = new Dtype[(M_+2) * value_size];
 
   for (int i = 0; i < (M_+2) * value_size; ++i) {
-    values[i] = 0;
-    new_values[i] = 0;
+    values[i] = Dtype(0.);
+    new_values[i] = Dtype(0.);
   }
   // Splatting
   for (int i = 0;  i < N_; ++i) {
@@ -206,7 +206,7 @@ void ModifiedPermutohedral<Dtype>::compute(Dtype* out, const Dtype* in,
   for (int i = 0; i < N_; ++i) {
     if  (!add) {
       for (int k = 0; k < value_size; ++k) {
-        out[i + k * N_] = 0;
+        out[i + k * N_] = Dtype(0.);
       }
     }
     for (int j = 0; j <= d_; ++j) {
