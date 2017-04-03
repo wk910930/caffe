@@ -87,18 +87,14 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
   /*-------------------- Message Passing --------------------*/
+  Dtype* spatial_out_data = spatial_out_blob_.mutable_cpu_data();
+  Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data();
   for (int n = 0; n < num_; ++n) {
-    const Dtype* prob_input_data = softmax_output_.cpu_data() +
-        softmax_output_.offset(n);
+    const Dtype* probs = softmax_output_.cpu_data() + softmax_output_.offset(n);
     // Gaussian filters: spatial
-    Dtype* spatial_out_data = spatial_out_blob_.mutable_cpu_data() +
-        spatial_out_blob_.offset(n);
-    spatial_lattice_->compute(spatial_out_data, prob_input_data, channels_);
+    spatial_lattice_->compute(spatial_out_data, probs, channels_);
     // Gaussian filters: bilateral
-    Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data() +
-        bilateral_out_blob_.offset(n);
-    bilateral_lattices_[n]->compute(bilateral_out_data, prob_input_data,
-        channels_);
+    bilateral_lattices_[n]->compute(bilateral_out_data, probs, channels_);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_,
@@ -110,6 +106,8 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
           bilateral_out_data + channel_id * num_pixels_,
           bilateral_out_data + channel_id * num_pixels_);
     }
+    spatial_out_data += spatial_out_blob_.offset(1);
+    bilateral_out_data += bilateral_out_blob_.offset(1);
   }
 
   /*-------------------- Weighting Filter Outputs --------------------*/

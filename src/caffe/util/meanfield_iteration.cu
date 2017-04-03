@@ -12,34 +12,28 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
   /*-------------------- Normalization --------------------*/
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
-  /*-------------------- Message Passing --------------------*/
+  /*-------------------- Message Passing (CPU) --------------------*/
+  Dtype* spatial_out_data = spatial_out_blob_.mutable_cpu_data();
+  Dtype* bilateral_out_data = bilateral_out_blob_.mutable_cpu_data();
   for (int n = 0; n < num_; ++n) {
-    const Dtype* prob_input_data = softmax_output_.cpu_data() +
-        softmax_output_.offset(n);
+    const Dtype* probs = softmax_output_.cpu_data() + softmax_output_.offset(n);
     // Gaussian filters: spatial
-    Dtype* spatial_out_cpu_data = spatial_out_blob_.mutable_cpu_data() +
-        spatial_out_blob_.offset(n);
-    spatial_lattice_->compute(spatial_out_cpu_data, prob_input_data, channels_);
-    Dtype* spatial_out_data = spatial_out_blob_.mutable_gpu_data() +
-        spatial_out_blob_.offset(n);
+    spatial_lattice_->compute(spatial_out_data, probs, channels_);
     // Gaussian filters: bilateral
-    Dtype* bilateral_out_cpu_data = bilateral_out_blob_.mutable_cpu_data() +
-        bilateral_out_blob_.offset(n);
-    bilateral_lattices_[n]->compute(bilateral_out_cpu_data, prob_input_data,
-        channels_);
-    Dtype* bilateral_out_data = bilateral_out_blob_.mutable_gpu_data() +
-        bilateral_out_blob_.offset(n);
+    bilateral_lattices_[n]->compute(bilateral_out_data, probs, channels_);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
-      caffe_gpu_mul(num_pixels_,
-          spatial_norm_.gpu_data(),
+      caffe_mul(num_pixels_,
+          spatial_norm_.cpu_data(),
           spatial_out_data + channel_id * num_pixels_,
           spatial_out_data + channel_id * num_pixels_);
-      caffe_gpu_mul(num_pixels_,
-          bilateral_norms_.gpu_data() + bilateral_norms_.offset(n),
+      caffe_mul(num_pixels_,
+          bilateral_norms_.cpu_data() + bilateral_norms_.offset(n),
           bilateral_out_data + channel_id * num_pixels_,
           bilateral_out_data + channel_id * num_pixels_);
     }
+    spatial_out_data += spatial_out_blob_.offset(1);
+    bilateral_out_data += bilateral_out_blob_.offset(1);
   }
 
   /*-------------------- Weighting Filter Outputs --------------------*/
