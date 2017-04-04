@@ -1,5 +1,3 @@
-Notice: This example is modified from [here](https://github.com/torrvision/crfasrnn/tree/master/python-scripts).
-
 ---
 name: CRF-RNN Semantic Image Segmentation Model trained on COCO-VOC
 caffemodel: TVG_CRFRNN_COCO_VOC.caffemodel
@@ -7,6 +5,8 @@ caffemodel_url: http://goo.gl/j7PrPZ
 license: Non-commercial, for commercial use, please contact crfasrnn@gmail.com
 sha1: bfda5c5149d566aa56695789fa9a08e7a7f3070a
 ---
+
+Notice: This example is modified from [here](https://github.com/torrvision/crfasrnn/tree/master/python-scripts).
 
 This model is for the ICCV paper titled "Conditional Random Fields as Recurrent Neural Networks". 
 
