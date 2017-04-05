@@ -149,21 +149,22 @@ void MeanfieldIteration<Dtype>::Forward_cpu() {
 
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::Backward_cpu() {
+  for (int i = 0; i < blobs_.size(); ++i) {
+    caffe_set(this->blobs_[i]->count(), Dtype(0.),
+      this->blobs_[i]->mutable_cpu_diff());
+  }
   /*-------------------- Add unary gradient --------------------*/
   vector<bool> eltwise_propagate_down(sum_bottom_vec_.size(), true);
   sum_layer_->Backward(sum_top_vec_, eltwise_propagate_down, sum_bottom_vec_);
 
   /*-------------------- Update compatibility diffs --------------------*/
-  caffe_set(this->blobs_[2]->count(), Dtype(0.),
-      this->blobs_[2]->mutable_cpu_diff());
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
         channels_, channels_, num_pixels_,
         Dtype(1.),
         pairwise_terms_.cpu_diff() + pairwise_terms_.offset(n),
         message_passing_.cpu_data() + message_passing_.offset(n),
-        Dtype(1.),
-        this->blobs_[2]->mutable_cpu_diff());
+        Dtype(1.), this->blobs_[2]->mutable_cpu_diff());
   }
 
   /*----------------- Gradient after compatibility transform -----------------*/
@@ -178,19 +179,13 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
   }
 
   /*-------------------- Gradient w.r.t. kernels weights --------------------*/
-  caffe_set(this->blobs_[0]->count(), Dtype(0.),
-      this->blobs_[0]->mutable_cpu_diff());
-  caffe_set(this->blobs_[1]->count(), Dtype(0.),
-      this->blobs_[1]->mutable_cpu_diff());
-
   for (int n = 0; n < num_; ++n) {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
         channels_, channels_, num_pixels_,
         Dtype(1.),
         message_passing_.cpu_diff() + message_passing_.offset(n),
         spatial_out_blob_.cpu_data() + spatial_out_blob_.offset(n),
-        Dtype(1.),
-        this->blobs_[0]->mutable_cpu_diff());
+        Dtype(1.), this->blobs_[0]->mutable_cpu_diff());
   }
 
   for (int n = 0; n < num_; ++n) {
@@ -199,8 +194,7 @@ void MeanfieldIteration<Dtype>::Backward_cpu() {
         Dtype(1.),
         message_passing_.cpu_diff() + message_passing_.offset(n),
         bilateral_out_blob_.cpu_data() + bilateral_out_blob_.offset(n),
-        Dtype(1.),
-        this->blobs_[1]->mutable_cpu_diff());
+        Dtype(1.), this->blobs_[1]->mutable_cpu_diff());
   }
 
   // Check whether there's a way to improve the accuracy of this calculation.
