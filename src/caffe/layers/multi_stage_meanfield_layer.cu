@@ -9,6 +9,7 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
   // Initialize the bilateral lattices.
+  bilateral_lattices_.clear();
   bilateral_lattices_.resize(num_);
   for (int n = 0; n < num_; ++n) {
     const Dtype* image_features = bottom[2]->cpu_data() + bottom[2]->offset(n);
@@ -35,7 +36,7 @@ template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Backward_gpu(
     const vector<Blob<Dtype>*>& top, const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
-  for (int i = (num_iterations_ - 1); i >= 0; --i) {
+  for (int i = num_iterations_ - 1; i >= 0; --i) {
     meanfield_iterations_[i]->Backward_gpu();
   }
   vector<bool> split_layer_propagate_down(1, true);
