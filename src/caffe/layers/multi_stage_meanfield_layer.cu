@@ -11,6 +11,8 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(
   // Initialize the bilateral lattices.
   bilateral_lattices_.clear();
   bilateral_lattices_.resize(num_);
+  caffe_set(bilateral_norms_.count(), Dtype(0.),
+      bilateral_norms_.mutable_cpu_data());
   for (int n = 0; n < num_; ++n) {
     const Dtype* image_features = bottom[2]->cpu_data() + bottom[2]->offset(n);
     compute_bilateral_kernel(image_features);

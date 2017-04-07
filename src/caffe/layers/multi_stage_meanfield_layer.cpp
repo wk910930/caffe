@@ -78,8 +78,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   // So we need only (num_iterations_ - 1) blobs.
   iteration_output_blobs_.resize(num_iterations_ - 1);
   for (int i = 0; i < num_iterations_ - 1; ++i) {
-    iteration_output_blobs_[i].reset(
-        new Blob<Dtype>(num_, channels_, height_, width_));
+    iteration_output_blobs_[i].reset(new Blob<Dtype>(bottom[0]->shape()));
   }
   // Make instances of MeanfieldIteration and initialize them.
   meanfield_iterations_.resize(num_iterations_);
@@ -116,6 +115,8 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
   // Initialize the bilateral lattices.
   bilateral_lattices_.clear();
   bilateral_lattices_.resize(num_);
+  caffe_set(bilateral_norms_.count(), Dtype(0.),
+      bilateral_norms_.mutable_cpu_data());
   for (int n = 0; n < num_; ++n) {
     const Dtype* image_features = bottom[2]->cpu_data() + bottom[2]->offset(n);
     compute_bilateral_kernel(image_features);
