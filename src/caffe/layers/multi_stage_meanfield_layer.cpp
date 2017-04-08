@@ -43,7 +43,27 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   if (this->blobs_.size() > 0) {
     LOG(INFO) << "Skipping parameter initialization";
   } else {
-    init_param_blobs(meanfield_param);
+    // blobs_[0] - spatial kernel weights
+    // blobs_[1] - bilateral kernel weights
+    // blobs_[2] - compatibility matrix
+    this->blobs_.resize(3);
+    // Allocate space for kernel weights.
+    this->blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_));
+    this->blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_));
+    this->blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
+    // Initialize the kernels weights.
+    read_into_the_diagonal(meanfield_param.spatial_filter_weights_str(),
+        this->blobs_[0].get());
+    read_into_the_diagonal(meanfield_param.bilateral_filter_weights_str(),
+        this->blobs_[1].get());
+    // Initialize the compatibility matrix.
+    switch (meanfield_param.compatibility_mode()) {
+    case MultiStageMeanfieldParameter_Mode_POTTS:
+      read_into_the_diagonal(Dtype(-1.), this->blobs_[2].get());
+      break;
+    default:
+      LOG(FATAL) << "Unknown compatibility mode.";
+    }
   }  // parameter initialization
 
   norm_feed_.Reshape(1, 1, height_, width_);
@@ -138,32 +158,6 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
             diffs_to_add, cur_blob->mutable_cpu_diff());
       }
     }
-  }
-}
-
-template <typename Dtype>
-void MultiStageMeanfieldLayer<Dtype>::init_param_blobs(
-    const MultiStageMeanfieldParameter& meanfield_param) {
-  // blobs_[0] - spatial kernel weights
-  // blobs_[1] - bilateral kernel weights
-  // blobs_[2] - compatibility matrix
-  this->blobs_.resize(3);
-  // Allocate space for kernel weights.
-  this->blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-  this->blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-  this->blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-  // Initialize the kernels weights.
-  read_into_the_diagonal(meanfield_param.spatial_filter_weights_str(),
-      this->blobs_[0].get());
-  read_into_the_diagonal(meanfield_param.bilateral_filter_weights_str(),
-      this->blobs_[1].get());
-  // Initialize the compatibility matrix.
-  switch (meanfield_param.compatibility_mode()) {
-  case MultiStageMeanfieldParameter_Mode_POTTS:
-    read_into_the_diagonal(Dtype(-1.), this->blobs_[2].get());
-    break;
-  default:
-    LOG(FATAL) << "Unknown compatibility mode.";
   }
 }
 
