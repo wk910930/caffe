@@ -24,10 +24,6 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   virtual inline const char* type() const { return "MultiStageMeanfield"; }
   virtual inline int ExactNumBottomBlobs() const { return 3; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
-  virtual ~MultiStageMeanfieldLayer() {
-    delete[] spatial_kernel_buffer_;
-    delete[] bilateral_kernel_buffer_;
-  }
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
@@ -74,8 +70,8 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
 
   shared_ptr<SplitLayer<Dtype> > split_layer_;
 
-  Dtype* spatial_kernel_buffer_;
-  Dtype* bilateral_kernel_buffer_;
+  Blob<Dtype> spatial_kernel_buffer_;
+  Blob<Dtype> bilateral_kernel_buffer_;
   shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice_;
   vector<shared_ptr<ModifiedPermutohedral<Dtype> > > bilateral_lattices_;
 };

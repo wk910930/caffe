@@ -11,13 +11,14 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(
   // Initialize the bilateral lattices.
   bilateral_lattices_.clear();
   bilateral_lattices_.resize(num_);
+  bilateral_norms_.Reshape(num_, 1, height_, width_);
   caffe_set(bilateral_norms_.count(), Dtype(0.),
       bilateral_norms_.mutable_cpu_data());
   for (int n = 0; n < num_; ++n) {
     const Dtype* image_features = bottom[2]->cpu_data() + bottom[2]->offset(n);
     compute_bilateral_kernel(image_features);
     bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
-    bilateral_lattices_[n]->init(bilateral_kernel_buffer_,
+    bilateral_lattices_[n]->init(bilateral_kernel_buffer_.cpu_data(),
         bilateral_dim_, num_pixels_);
     // Calculate bilateral filter normalization factors.
     Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() +
