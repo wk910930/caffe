@@ -76,8 +76,8 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::Backward_gpu() {
   for (int i = 0; i < blobs_.size(); ++i) {
-    caffe_set(this->blobs_[i]->count(), Dtype(0.),
-      this->blobs_[i]->mutable_cpu_diff());
+    caffe_gpu_set(this->blobs_[i]->count(), Dtype(0.),
+      this->blobs_[i]->mutable_gpu_diff());
   }
   /*-------------------- Add unary gradient --------------------*/
   vector<bool> eltwise_propagate_down(sum_bottom_vec_.size(), true);
