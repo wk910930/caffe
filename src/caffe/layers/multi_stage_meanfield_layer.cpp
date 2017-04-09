@@ -11,8 +11,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   const MultiStageMeanfieldParameter& meanfield_param =
       this->layer_param_.multi_stage_meanfield_param();
   num_iterations_ = meanfield_param.num_iterations();
-  CHECK_GT(num_iterations_, 1)
-      << "Number of iterations must be greater than 1.";
+  CHECK_GT(num_iterations_, 1) << "num_iterations must be greater than 1.";
   // bandwidth values of Gaussian kernels
   theta_alpha_ = meanfield_param.theta_alpha();
   theta_beta_ = meanfield_param.theta_beta();
@@ -25,14 +24,13 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();
   num_pixels_ = height_ * width_;
-  // Check spatial dim
-  CHECK_EQ(num_, bottom[2]->num())
-      << "num does not match between unary term and image.";
-  CHECK_EQ(height_, bottom[2]->height())
-      << "height does not match between unary term and image.";
-  CHECK_EQ(width_, bottom[2]->width())
-      << "width does not match between unary term and image.";
   CHECK(bottom[0]->shape() == bottom[1]->shape());
+  CHECK_EQ(num_, bottom[2]->num())
+      << "num does not match between unary terms and image.";
+  CHECK_EQ(height_, bottom[2]->height())
+      << "height does not match between unary terms and image.";
+  CHECK_EQ(width_, bottom[2]->width())
+      << "width does not match between unary terms and image.";
 
   spatial_dim_ = 2;
   bilateral_dim_ = 2 + bottom[2]->channels();
