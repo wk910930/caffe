@@ -164,13 +164,13 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
   caffe_set(spatial_norm_.count(), Dtype(0.), spatial_norm_.mutable_cpu_data());
   compute_spatial_kernel();
   spatial_lattice_.reset(new ModifiedPermutohedral<Dtype>());
-  spatial_lattice_->init(spatial_kernel_buffer_.cpu_data(), spatial_dim_,
-      num_pixels_);
-  spatial_lattice_->compute(spatial_norm_.mutable_cpu_data(),
-      norm_feed_.cpu_data(), 1);
+  spatial_lattice_->init(spatial_kernel_buffer_.cpu_data(),
+      spatial_dim_, num_pixels_);
+  // Calculate spatial filter normalization factors.
+  Dtype* norm_output_data = spatial_norm_.mutable_cpu_data();
+  spatial_lattice_->compute(norm_output_data, norm_feed_.cpu_data(), 1);
   for (int i = 0; i < num_pixels_; ++i) {
-    spatial_norm_.mutable_cpu_data()[i] =
-        Dtype(1.) / (spatial_norm_.cpu_data()[i] + eps_);
+    norm_output_data[i] = Dtype(1.) / (norm_output_data[i] + eps_);
   }
 }
 
