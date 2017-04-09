@@ -32,9 +32,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
       << "height does not match between unary term and image.";
   CHECK_EQ(width_, bottom[2]->width())
       << "width does not match between unary term and image.";
-  if (bottom[0]->shape() != bottom[1]->shape()) {
-    LOG(FATAL) << "The size of unary and pairwise terms don't match.";
-  }
+  CHECK(bottom[0]->shape() == bottom[1]->shape());
 
   spatial_dim_ = 2;
   bilateral_dim_ = 2 + bottom[2]->channels();
@@ -111,7 +109,8 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Reshape(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
-  top[0]->Reshape(num_, channels_, height_, width_);
+  CHECK_EQ(num_, bottom[0]->num()) << "Currently the num should be fixed.";
+  top[0]->ReshapeLike(*bottom[0]);
 }
 
 /**
