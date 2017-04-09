@@ -18,15 +18,17 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
   channels_ = unary_terms->channels();
   num_pixels_ = unary_terms->height() * unary_terms->width();
 
+  // Check if we need to set up the weights
   if (this->blobs_.size() > 0) {
-    LOG(INFO) << "Meanfield iteration skipping parameter initialization.";
+    LOG(INFO) << "Skipping parameter initialization";
   } else {
+    // blobs_[0] - spatial kernel weights
+    // blobs_[1] - bilateral kernel weights
+    // blobs_[2] - compatibility matrix
     blobs_.resize(3);
-    // spatial kernel weight
+    // Allocate space for kernel weights.
     blobs_[0].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-    // bilateral kernel weight
     blobs_[1].reset(new Blob<Dtype>(1, 1, channels_, channels_));
-    // compatibility transform matrix
     blobs_[2].reset(new Blob<Dtype>(1, 1, channels_, channels_));
   }
 
