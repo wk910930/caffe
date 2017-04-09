@@ -63,19 +63,22 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
 }
 
 /**
- * To be invoked before every call to the Forward_cpu() method.
+ * To be invoked before every call to the Forward_cpu/gpu() method.
  */
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::PrePass(
     const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
-    const vector<shared_ptr<ModifiedPermutohedral<Dtype> > >& bilateral_lattices,  // NOLINT(whitespace/line_length)
+    const vector<shared_ptr<
+        ModifiedPermutohedral<Dtype> > >& bilateral_lattices,
     const Blob<Dtype>& bilateral_norms) {
-  bilateral_lattices_ = bilateral_lattices;
-  bilateral_norms_.CopyFrom(bilateral_norms, false, true);
+  CHECK_EQ(blobs_.size(), parameters_to_copy_from.size())
+      << "parameter-blobs size do not match.";
   // Get copies of the up-to-date parameters.
-  for (int i = 0; i < parameters_to_copy_from.size(); ++i) {
+  for (int i = 0; i < blobs_.size(); ++i) {
     blobs_[i]->CopyFrom(*(parameters_to_copy_from[i].get()));
   }
+  bilateral_lattices_ = bilateral_lattices;
+  bilateral_norms_.CopyFrom(bilateral_norms, false, true);
 }
 
 /**
