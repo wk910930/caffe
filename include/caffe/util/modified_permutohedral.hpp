@@ -28,8 +28,6 @@ class ModifiedPermutohedral {
   int N_ = 0;  // number of elements
   int M_ = 0;  // size of sparse discretized space
   int d_ = 0;  // dimension of features
-  int w_ = 0;  // width
-  int h_ = 0;  // height
 };
 
 }  // namespace caffe
