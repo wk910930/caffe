@@ -25,9 +25,9 @@ class ModifiedPermutohedral {
   std::vector<Dtype> barycentric_;
   std::vector<Neighbors> blur_neighbors_;
 
+  int dim_ = 0;  // dimension of features
   int N_ = 0;  // number of elements
   int M_ = 0;  // size of sparse discretized space
-  int d_ = 0;  // dimension of features
 };
 
 }  // namespace caffe
