@@ -49,7 +49,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   // Compute the simplex each feature lies in
   for (int k = 0; k < N_; ++k) {
     // Elevate the features ( y = Ep, see p.5 in [Adams etal 2010])
-    const Dtype* feat = features + k * num_dimensions;
+    const Dtype* feat = features + k * d_;
     // sm contains the sum of 1..n of our feature vector
     Dtype sm = Dtype(0.);
     for (int j = d_; j > 0; --j) {
