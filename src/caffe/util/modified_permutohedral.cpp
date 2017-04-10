@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <utility>
+#include <vector>
 
 #include "caffe/util/hash_table_copy.hpp"
 #include "caffe/util/modified_permutohedral.hpp"
@@ -13,21 +14,17 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
   // There is going to be a lot of magic here
   dim_ = num_dimensions;
   N_ = num_points;
-
   // Allocate the class memory
   offset_.resize((dim_+1) * N_);
-  rank_.resize((dim_+1) * N_);
   barycentric_.resize((dim_+1) * N_);
-
   // Allocate the local memory
-  Dtype* scale_factor = new Dtype[dim_];
-  Dtype* elevated = new Dtype[dim_+1];
-  Dtype* rem0 = new Dtype[dim_+1];
-  Dtype* barycentric = new Dtype[dim_+2];
-  int* rank = new int[dim_+1];
-  int* canonical = new int[(dim_+1) * (dim_+1)];
+  vector<int> canonical((dim_+1) * (dim_+1));
+  vector<Dtype> scale_factor(dim_);
+  vector<Dtype> elevated(dim_+1);
+  vector<Dtype> rem0(dim_+1);
+  vector<Dtype> barycentric(dim_+2);
+  vector<int> rank(dim_+1);
   int* key = new int[dim_+1];
-
   // Compute the canonical simplex
   for (int i = 0; i <= dim_; ++i) {
     for (int j = 0; j <= dim_ - i; ++j) {
@@ -37,17 +34,14 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
       canonical[i * (dim_+1) + j] = i - (dim_+1);
     }
   }
-
   // Expected standard deviation of our filter (p.6 in [Adams etal 2010])
   Dtype inv_std_dev = sqrt(Dtype(2.) / Dtype(3.)) * (dim_+1);
   // Compute the diagonal part of E (p.5 in [Adams etal 2010])
   for (int i = 0; i < dim_; ++i) {
-    scale_factor[i] = Dtype(1.) / sqrt(Dtype((i+2) * (i+1)))
-        * inv_std_dev;
+    scale_factor[i] = Dtype(1.) / sqrt(Dtype((i+2) * (i+1))) *
+        inv_std_dev;
   }
-
   HashTableCopy hash_table(dim_, (dim_+1) * N_);
-
   // Compute the simplex each feature lies in
   for (int k = 0; k < N_; ++k) {
     // Elevate the features ( y = Ep, see p.5 in [Adams etal 2010])
@@ -60,7 +54,6 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
       sm += cf;
     }
     elevated[0] = sm;
-
     // Find the closest 0-colored simplex through rounding
     Dtype down_factor = Dtype(1.) / (dim_ + 1);
     Dtype up_factor = dim_ + 1;
@@ -116,36 +109,24 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     }
     // Wrap around
     barycentric[0] += Dtype(1.) + barycentric[dim_+1];
-
     // Compute all vertices and their offset
     for (int d = 0; d <= dim_; ++d) {
       for (int i = 0; i < dim_; ++i) {
         key[i] = rem0[i] + canonical[d * (dim_+1) + rank[i]];
       }
-      offset_[k*(dim_+1) + d] = hash_table.find(key, true);
-      rank_[k*(dim_+1) + d] = rank[d];
-      barycentric_[k*(dim_+1) + d] = barycentric[d];
+      offset_[k * (dim_+1) + d] = hash_table.find(key, true);
+      barycentric_[k * (dim_+1) + d] = barycentric[d];
     }
   }
-  delete [] scale_factor;
-  delete [] elevated;
-  delete [] rem0;
-  delete [] barycentric;
-  delete [] rank;
-  delete [] canonical;
   delete [] key;
 
   /*---------- Find the Neighbors of each lattice point ----------*/
-
   // Get the number of vertices in the lattice
   M_ = hash_table.size();
-
   // Create the neighborhood structure
   blur_neighbors_.resize((dim_+1) * M_);
-
   int* n1 = new int[dim_+1];
   int* n2 = new int[dim_+1];
-
   // For each of d+1 axes,
   for (int j = 0; j <= dim_; ++j) {
     for (int i = 0; i < M_; ++i) {

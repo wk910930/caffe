@@ -21,7 +21,6 @@ class ModifiedPermutohedral {
   };
 
   std::vector<int> offset_;
-  std::vector<int> rank_;
   std::vector<Dtype> barycentric_;
   std::vector<Neighbors> blur_neighbors_;
 
