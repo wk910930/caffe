@@ -2,7 +2,7 @@
 #include <utility>
 #include <vector>
 
-#include "caffe/util/hash_table_copy.hpp"
+#include "caffe/util/hash_table.hpp"
 #include "caffe/util/modified_permutohedral.hpp"
 
 namespace caffe {
@@ -41,7 +41,7 @@ void ModifiedPermutohedral<Dtype>::init(const Dtype* features,
     scale_factor[i] = Dtype(1.) / sqrt(Dtype((i+2) * (i+1))) *
         inv_std_dev;
   }
-  HashTableCopy hash_table(dim_, (dim_+1) * N_);
+  HashTable hash_table(dim_, (dim_+1) * N_);
   // Compute the simplex each feature lies in
   for (int k = 0; k < N_; ++k) {
     // Elevate the features ( y = Ep, see p.5 in [Adams etal 2010])
