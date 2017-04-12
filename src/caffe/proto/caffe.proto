@@ -539,6 +539,7 @@ message LayerParameter {
   optional SoftmaxParameter softmax_param = 125;
   optional SpatialResizeParameter spatial_resize_param = 508;
   optional SPPParameter spp_param = 132;
+  optional StochasticChannelsParameter stochastic_channels_param = 509;
   optional SliceParameter slice_param = 126;
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
@@ -1770,6 +1771,14 @@ message SPPParameter {
     CUDNN = 2;
   }
   optional Engine engine = 6 [default = DEFAULT];
+}
+
+message StochasticChannelsParameter {
+  // Set how many channels to output.
+  // When num_output=0, it behaviors like x = f(x)
+  optional uint32 num_output = 1 [default = 0];
+  // If set, the layer will output specific channels.
+  repeated uint32 channel_id = 2;
 }
 
 // DEPRECATED: use LayerParameter.
