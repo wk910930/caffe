@@ -68,7 +68,7 @@ if __name__ == '__main__':
         print ''
         np.set_printoptions(linewidth=160)
         np.set_printoptions(suppress=True)
-        np.set_printoptions(precision=1)
+        np.set_printoptions(precision=2)
         for layer_name, param in net.params.iteritems():
             if layer_name == args.layer_name:
                 print 'Showing [{}]'.format(layer_name)
