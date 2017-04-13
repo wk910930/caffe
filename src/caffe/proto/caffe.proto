@@ -1332,7 +1332,8 @@ message MultiBoxLossParameter {
 // Message that stores parameters used by MultiStageMeanfieldLayer
 message MultiStageMeanfieldParameter {
   enum Mode {
-    POTTS = 0;
+    POTTS = 0;  // -1 on diagonal and 0 otherwise
+    POTTS_ZERO = 1;  // 0 on diagonal and 1 otherwise
   }
   optional Mode compatibility_mode = 1 [default = POTTS];
 

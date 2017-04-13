@@ -50,6 +50,11 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
     case MultiStageMeanfieldParameter_Mode_POTTS:
       read_into_the_diagonal(Dtype(-1.), this->blobs_[2].get());
       break;
+    case MultiStageMeanfieldParameter_Mode_POTTS_ZERO:
+      read_into_the_diagonal(Dtype(-1.), this->blobs_[2].get());
+      caffe_add_scalar(this->blobs_[2]->count(), Dtype(1.),
+          this->blobs_[2]->mutable_cpu_data());
+      break;
     default:
       LOG(FATAL) << "Unknown compatibility mode.";
     }
