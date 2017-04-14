@@ -37,6 +37,7 @@ void SmoothL1LossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
         diff_.gpu_data(),
         diff_.mutable_gpu_data());  // d := w_in * (b0 - b1)
   }
+  // NOLINT_NEXT_LINE(whitespace/operators)
   SmoothL1Forward<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
       count, diff_.gpu_data(), errors_.mutable_gpu_data(), sigma2_);
   CUDA_POST_KERNEL_CHECK;
@@ -76,6 +77,7 @@ void SmoothL1LossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
   // after forwards, diff_ holds w_in * (b0 - b1)
   int count = diff_.count();
+  // NOLINT_NEXT_LINE(whitespace/operators)
   SmoothL1Backward<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
       count, diff_.gpu_data(), diff_.mutable_gpu_data(), sigma2_);
   CUDA_POST_KERNEL_CHECK;

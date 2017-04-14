@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cfloat>
 #include <vector>
 
@@ -136,18 +137,21 @@ void ROIPoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   Dtype* top_data = top[0]->mutable_gpu_data();
   int* argmax_data = max_idx_.mutable_gpu_data();
   int count = top[0]->count();
-  // NOLINT_NEXT_LINE(whitespace/operators)
   switch (this->layer_param_.roi_pooling_param().pool()) {
   case ROIPoolingParameter_PoolMethod_MAX:
-    ROIPoolForwardMax<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
+    // NOLINT_NEXT_LINE(whitespace/operators)
+    ROIPoolForwardMax<Dtype><<<CAFFE_GET_BLOCKS(count),
+        CAFFE_CUDA_NUM_THREADS>>>(
         count, bottom_data, spatial_scale_, channels_, height_, width_,
         pooled_height_, pooled_width_, bottom_rois, top_data, argmax_data);
-    break;
+  break;
   case ROIPoolingParameter_PoolMethod_AVE:
-    ROIPoolForwardAve<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
+    // NOLINT_NEXT_LINE(whitespace/operators)
+    ROIPoolForwardAve<Dtype><<<CAFFE_GET_BLOCKS(count),
+        CAFFE_CUDA_NUM_THREADS>>>(
         count, bottom_data, spatial_scale_, channels_, height_, width_,
         pooled_height_, pooled_width_, bottom_rois, top_data);
-    break;
+  break;
   default:
     LOG(FATAL) << "Unknown pooling method.";
   }
@@ -329,18 +333,23 @@ void ROIPoolingLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   const int count = bottom[0]->count();
   caffe_gpu_set(count, Dtype(0.), bottom_diff);
   const int* argmax_data = max_idx_.gpu_data();
-  // NOLINT_NEXT_LINE(whitespace/operators)
   switch (this->layer_param_.roi_pooling_param().pool()) {
   case ROIPoolingParameter_PoolMethod_MAX:
-    ROIPoolBackwardMax<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
+    // NOLINT_NEXT_LINE(whitespace/operators)
+    ROIPoolBackwardMax<Dtype><<<CAFFE_GET_BLOCKS(count),
+        CAFFE_CUDA_NUM_THREADS>>>(
         count, top_diff, argmax_data, top[0]->num(), spatial_scale_, channels_,
-        height_, width_, pooled_height_, pooled_width_, bottom_diff, bottom_rois);
-    break;
+        height_, width_, pooled_height_, pooled_width_,
+        bottom_diff, bottom_rois);
+  break;
   case ROIPoolingParameter_PoolMethod_AVE:
-    ROIPoolBackwardAve<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
+    // NOLINT_NEXT_LINE(whitespace/operators)
+    ROIPoolBackwardAve<Dtype><<<CAFFE_GET_BLOCKS(count),
+        CAFFE_CUDA_NUM_THREADS>>>(
         count, top_diff, argmax_data, top[0]->num(), spatial_scale_, channels_,
-        height_, width_, pooled_height_, pooled_width_, bottom_diff, bottom_rois);
-    break;
+        height_, width_, pooled_height_, pooled_width_,
+        bottom_diff, bottom_rois);
+  break;
   default:
     LOG(FATAL) << "Unknown pooling method.";
   }
