@@ -7,7 +7,7 @@ namespace caffe {
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Forward_gpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
-  split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
+  split_layer_->Forward(split_bottom_vec_, split_top_vec_);
   // Initialize the bilateral lattices.
   init_bilateral_lattice(bottom[2]);
   for (int i = 0; i < num_iterations_; ++i) {
@@ -24,9 +24,9 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_gpu(
   for (int i = num_iterations_ - 1; i >= 0; --i) {
     meanfield_iterations_[i]->Backward_gpu();
   }
-  vector<bool> split_layer_propagate_down(1, true);
-  split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down,
-      split_layer_bottom_vec_);
+  vector<bool> split_propagate_down(1, true);
+  split_layer_->Backward(split_top_vec_, split_propagate_down,
+      split_bottom_vec_);
   // Accumulate diffs from mean field iterations.
   for (int blob_id = 0; blob_id < this->blobs_.size(); ++blob_id) {
     if (this->param_propagate_down_[blob_id]) {

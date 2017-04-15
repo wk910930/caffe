@@ -61,13 +61,16 @@ class MultiStageMeanfieldLayer : public Layer<Dtype> {
   Blob<Dtype> spatial_norm_;
   Blob<Dtype> bilateral_norms_;
 
-  vector<Blob<Dtype>*> split_layer_bottom_vec_;
-  vector<Blob<Dtype>*> split_layer_top_vec_;
-  vector<shared_ptr<Blob<Dtype> > > split_layer_out_blobs_;
   vector<shared_ptr<Blob<Dtype> > > iteration_output_blobs_;
   vector<shared_ptr<MeanfieldIteration<Dtype> > > meanfield_iterations_;
 
-  shared_ptr<SplitLayer<Dtype> > split_layer_;
+  /// The internal SplitLayer used to split unary terms
+  shared_ptr<Layer<Dtype> > split_layer_;
+  /// bottom vector holder used in call to the underlying SplitLayer::Forward
+  vector<Blob<Dtype>*> split_bottom_vec_;
+  /// top vector holder used in call to the underlying SplitLayer::Forward
+  vector<Blob<Dtype>*> split_top_vec_;
+  vector<shared_ptr<Blob<Dtype> > > split_top_blobs_;
 
   Blob<Dtype> spatial_kernel_buffer_;
   Blob<Dtype> bilateral_kernel_buffer_;

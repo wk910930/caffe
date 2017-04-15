@@ -70,17 +70,18 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   // Configure the split layer that is used to make copies of the unary term.
   // One copy for each iteration.
   // It may be possible to optimize this calculation later.
-  split_layer_bottom_vec_.clear();
-  split_layer_bottom_vec_.push_back(bottom[0]);
-  split_layer_top_vec_.clear();
-  split_layer_out_blobs_.resize(num_iterations_);
+  LayerParameter split_param(this->layer_param_);
+  split_param.set_type("Split");
+  split_layer_ = LayerRegistry<Dtype>::CreateLayer(split_param);
+  split_bottom_vec_.clear();
+  split_bottom_vec_.push_back(bottom[0]);
+  split_top_vec_.clear();
+  split_top_blobs_.resize(num_iterations_);
   for (int i = 0; i < num_iterations_; ++i) {
-    split_layer_out_blobs_[i].reset(new Blob<Dtype>());
-    split_layer_top_vec_.push_back(split_layer_out_blobs_[i].get());
+    split_top_blobs_[i].reset(new Blob<Dtype>());
+    split_top_vec_.push_back(split_top_blobs_[i].get());
   }
-  LayerParameter split_layer_param;
-  split_layer_.reset(new SplitLayer<Dtype>(split_layer_param));
-  split_layer_->SetUp(split_layer_bottom_vec_, split_layer_top_vec_);
+  split_layer_->SetUp(split_bottom_vec_, split_top_vec_);
 
   // Make blobs to store outputs of each meanfield iteration.
   // Output of the last iteration is stored in top[0].
@@ -94,7 +95,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
   for (int i = 0; i < num_iterations_; ++i) {
     meanfield_iterations_[i].reset(new MeanfieldIteration<Dtype>());
     meanfield_iterations_[i]->OneTimeSetUp(
-        split_layer_out_blobs_[i].get(),
+        split_top_blobs_[i].get(),
         (i == 0) ? bottom[1] : iteration_output_blobs_[i - 1].get(),
         (i == num_iterations_ - 1) ? top[0] : iteration_output_blobs_[i].get(),
         spatial_lattice_, spatial_norm_);
@@ -128,7 +129,7 @@ void MultiStageMeanfieldLayer<Dtype>::Reshape(
 template <typename Dtype>
 void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
-  split_layer_->Forward(split_layer_bottom_vec_, split_layer_top_vec_);
+  split_layer_->Forward(split_bottom_vec_, split_top_vec_);
   // Initialize the bilateral lattices.
   init_bilateral_lattice(bottom[2]);
   for (int i = 0; i < num_iterations_; ++i) {
@@ -145,9 +146,9 @@ void MultiStageMeanfieldLayer<Dtype>::Backward_cpu(
   for (int i = num_iterations_ - 1; i >= 0; --i) {
     meanfield_iterations_[i]->Backward_cpu();
   }
-  vector<bool> split_layer_propagate_down(1, true);
-  split_layer_->Backward(split_layer_top_vec_, split_layer_propagate_down,
-      split_layer_bottom_vec_);
+  vector<bool> split_propagate_down(1, true);
+  split_layer_->Backward(split_top_vec_, split_propagate_down,
+      split_bottom_vec_);
   // Accumulate diffs from mean field iterations.
   for (int blob_id = 0; blob_id < this->blobs_.size(); ++blob_id) {
     if (this->param_propagate_down_[blob_id]) {
