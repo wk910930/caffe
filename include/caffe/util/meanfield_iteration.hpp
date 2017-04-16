@@ -20,7 +20,7 @@ class MeanfieldIteration {
       Blob<Dtype>* unary_terms,
       Blob<Dtype>* softmax_input,
       Blob<Dtype>* output_blob,
-      const shared_ptr<ModifiedPermutohedral<Dtype> >& spatial_lattice,
+      const ModifiedPermutohedral<Dtype>& spatial_lattice,
       const Blob<Dtype>& spatial_norm);
 
   /**
@@ -28,8 +28,7 @@ class MeanfieldIteration {
    */
   void PrePass(
       const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
-      const vector<shared_ptr<
-          ModifiedPermutohedral<Dtype> > >& bilateral_lattices,
+      const vector<ModifiedPermutohedral<Dtype> >& bilateral_lattices,
       const Blob<Dtype>& bilateral_norms);
 
   /**
@@ -81,8 +80,8 @@ class MeanfieldIteration {
   Blob<Dtype> spatial_norm_;
   Blob<Dtype> bilateral_norms_;
 
-  shared_ptr<ModifiedPermutohedral<Dtype> > spatial_lattice_;
-  vector<shared_ptr<ModifiedPermutohedral<Dtype> > > bilateral_lattices_;
+  ModifiedPermutohedral<Dtype> spatial_lattice_;
+  vector<ModifiedPermutohedral<Dtype> > bilateral_lattices_;
 };
 
 }  // namespace caffe

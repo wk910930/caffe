@@ -169,12 +169,11 @@ void MultiStageMeanfieldLayer<Dtype>::init_spatial_lattice() {
   spatial_norm_.Reshape(1, 1, height_, width_);
   caffe_set(spatial_norm_.count(), Dtype(0.), spatial_norm_.mutable_cpu_data());
   compute_spatial_kernel();
-  spatial_lattice_.reset(new ModifiedPermutohedral<Dtype>());
-  spatial_lattice_->init(spatial_kernel_buffer_.cpu_data(),
+  spatial_lattice_.init(spatial_kernel_buffer_.cpu_data(),
       spatial_dim_, num_pixels_);
   // Calculate spatial filter normalization factors.
   Dtype* norm_output_data = spatial_norm_.mutable_cpu_data();
-  spatial_lattice_->compute(norm_output_data, norm_feed_.cpu_data(), 1);
+  spatial_lattice_.compute(norm_output_data, norm_feed_.cpu_data(), 1);
   for (int i = 0; i < num_pixels_; ++i) {
     norm_output_data[i] = Dtype(1.) / (norm_output_data[i] + eps_);
   }
@@ -191,13 +190,12 @@ void MultiStageMeanfieldLayer<Dtype>::init_bilateral_lattice(
   for (int n = 0; n < num_; ++n) {
     compute_bilateral_kernel(image_features->cpu_data() +
         image_features->offset(n));
-    bilateral_lattices_[n].reset(new ModifiedPermutohedral<Dtype>());
-    bilateral_lattices_[n]->init(bilateral_kernel_buffer_.cpu_data(),
+    bilateral_lattices_[n].init(bilateral_kernel_buffer_.cpu_data(),
         bilateral_dim_, num_pixels_);
     // Calculate bilateral filter normalization factors.
     Dtype* norm_output_data = bilateral_norms_.mutable_cpu_data() +
         bilateral_norms_.offset(n);
-    bilateral_lattices_[n]->compute(norm_output_data, norm_feed_.cpu_data(), 1);
+    bilateral_lattices_[n].compute(norm_output_data, norm_feed_.cpu_data(), 1);
     for (int i = 0; i < num_pixels_; ++i) {
       norm_output_data[i] = Dtype(1.) / (norm_output_data[i] + eps_);
     }

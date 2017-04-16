@@ -18,9 +18,9 @@ void MeanfieldIteration<Dtype>::Forward_gpu() {
   for (int n = 0; n < num_; ++n) {
     const Dtype* probs = softmax_output_.cpu_data() + softmax_output_.offset(n);
     // Gaussian filters: spatial
-    spatial_lattice_->compute(spatial_out_data, probs, channels_);
+    spatial_lattice_.compute(spatial_out_data, probs, channels_);
     // Gaussian filters: bilateral
-    bilateral_lattices_[n]->compute(bilateral_out_data, probs, channels_);
+    bilateral_lattices_[n].compute(bilateral_out_data, probs, channels_);
     // Pixel-wise normalization.
     for (int channel_id = 0; channel_id < channels_; ++channel_id) {
       caffe_mul(num_pixels_,
@@ -164,11 +164,11 @@ void MeanfieldIteration<Dtype>::Backward_gpu() {
 
   /*-------------------- Gradient for message passing --------------------*/
   for (int n = 0; n < num_; ++n) {
-    spatial_lattice_->compute(
+    spatial_lattice_.compute(
         softmax_output_.mutable_cpu_diff() + softmax_output_.offset(n),
         spatial_out_blob_.cpu_diff() + spatial_out_blob_.offset(n),
         channels_, true, false);
-    bilateral_lattices_[n]->compute(
+    bilateral_lattices_[n].compute(
         softmax_output_.mutable_cpu_diff() + softmax_output_.offset(n),
         bilateral_out_blob_.cpu_diff() + bilateral_out_blob_.offset(n),
         channels_, true, true);
