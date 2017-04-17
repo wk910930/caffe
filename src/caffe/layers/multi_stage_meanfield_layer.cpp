@@ -97,8 +97,7 @@ void MultiStageMeanfieldLayer<Dtype>::LayerSetUp(
     meanfield_iterations_[i]->OneTimeSetUp(
         split_top_blobs_[i].get(),
         (i == 0) ? bottom[1] : iteration_output_blobs_[i - 1].get(),
-        (i == num_iterations_ - 1) ? top[0] : iteration_output_blobs_[i].get(),
-        spatial_lattice_, spatial_norm_);
+        (i == num_iterations_ - 1) ? top[0] : iteration_output_blobs_[i].get());
   }
   this->param_propagate_down_.resize(this->blobs_.size(), true);
 }
@@ -133,8 +132,8 @@ void MultiStageMeanfieldLayer<Dtype>::Forward_cpu(
   // Initialize the bilateral lattices.
   init_bilateral_lattice(bottom[2]);
   for (int i = 0; i < num_iterations_; ++i) {
-    meanfield_iterations_[i]->PrePass(
-        this->blobs_, bilateral_lattices_, bilateral_norms_);
+    meanfield_iterations_[i]->PrePass(this->blobs_,
+        spatial_lattice_, spatial_norm_, bilateral_lattices_, bilateral_norms_);
     meanfield_iterations_[i]->Forward_cpu();
   }
 }

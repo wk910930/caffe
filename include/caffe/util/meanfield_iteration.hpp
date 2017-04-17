@@ -16,18 +16,15 @@ class MeanfieldIteration {
   /**
    * Must be invoked only once after the construction of the layer.
    */
-  void OneTimeSetUp(
-      Blob<Dtype>* unary_terms,
-      Blob<Dtype>* softmax_input,
-      Blob<Dtype>* output_blob,
-      const ModifiedPermutohedral<Dtype>& spatial_lattice,
-      const Blob<Dtype>& spatial_norm);
+  void OneTimeSetUp(Blob<Dtype>* unary_terms, Blob<Dtype>* softmax_input,
+      Blob<Dtype>* output_blob);
 
   /**
    * Must be invoked before invoking {@link Forward_cpu()}
    */
-  void PrePass(
-      const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
+  void PrePass(const vector<shared_ptr<Blob<Dtype> > >& parameters,
+      const ModifiedPermutohedral<Dtype>& spatial_lattice,
+      const Blob<Dtype>& spatial_norm,
       const vector<ModifiedPermutohedral<Dtype> >& bilateral_lattices,
       const Blob<Dtype>& bilateral_norms);
 

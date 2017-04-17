@@ -9,11 +9,8 @@ namespace caffe {
  */
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::OneTimeSetUp(
-    Blob<Dtype>* unary_terms,
-    Blob<Dtype>* softmax_input,
-    Blob<Dtype>* output_blob,
-    const ModifiedPermutohedral<Dtype>& spatial_lattice,
-    const Blob<Dtype>& spatial_norm) {
+    Blob<Dtype>* unary_terms, Blob<Dtype>* softmax_input,
+    Blob<Dtype>* output_blob) {
   num_ = unary_terms->num();
   channels_ = unary_terms->channels();
   num_pixels_ = unary_terms->height() * unary_terms->width();
@@ -59,9 +56,6 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
   LayerParameter softmax_param;
   softmax_layer_.reset(new SoftmaxLayer<Dtype>(softmax_param));
   softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
-
-  spatial_lattice_ = spatial_lattice;
-  spatial_norm_.CopyFrom(spatial_norm, false, true);
 }
 
 /**
@@ -69,15 +63,18 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
  */
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::PrePass(
-    const vector<shared_ptr<Blob<Dtype> > >& parameters_to_copy_from,
+    const vector<shared_ptr<Blob<Dtype> > >& parameters,
+    const ModifiedPermutohedral<Dtype>& spatial_lattice,
+    const Blob<Dtype>& spatial_norm,
     const vector<ModifiedPermutohedral<Dtype> >& bilateral_lattices,
     const Blob<Dtype>& bilateral_norms) {
-  CHECK_EQ(blobs_.size(), parameters_to_copy_from.size())
-      << "parameter-blobs size do not match.";
+  CHECK_EQ(blobs_.size(), parameters.size()) << "param-blob size do not match.";
   // Get copies of the up-to-date parameters.
   for (int i = 0; i < blobs_.size(); ++i) {
-    blobs_[i]->CopyFrom(*(parameters_to_copy_from[i].get()));
+    blobs_[i]->CopyFrom(*(parameters[i].get()));
   }
+  spatial_lattice_ = spatial_lattice;
+  spatial_norm_.CopyFrom(spatial_norm, false, true);
   bilateral_lattices_ = bilateral_lattices;
   bilateral_norms_.CopyFrom(bilateral_norms, false, true);
 }
