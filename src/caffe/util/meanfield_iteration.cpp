@@ -38,6 +38,7 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
   sum_top_vec_.clear();
   sum_top_vec_.push_back(output_blob);
   LayerParameter sum_param;
+  sum_param.set_type("Eltwise");
   sum_param.mutable_eltwise_param()->add_coeff(Dtype(1.));
   sum_param.mutable_eltwise_param()->add_coeff(Dtype(-1.));
   sum_param.mutable_eltwise_param()->set_operation(
@@ -51,6 +52,7 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
   softmax_top_vec_.clear();
   softmax_top_vec_.push_back(&softmax_output_);
   LayerParameter softmax_param;
+  softmax_param.set_type("Softmax");
   softmax_layer_.reset(new SoftmaxLayer<Dtype>(softmax_param));
   softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
 }
