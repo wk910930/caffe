@@ -4,9 +4,6 @@
 
 namespace caffe {
 
-/**
- * To be invoked once only immediately after construction.
- */
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::OneTimeSetUp(
     Blob<Dtype>* unary_terms, Blob<Dtype>* softmax_input,
@@ -58,9 +55,6 @@ void MeanfieldIteration<Dtype>::OneTimeSetUp(
   softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
 }
 
-/**
- * To be invoked before every call to the Forward_cpu/gpu() method.
- */
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::PrePass(
     const vector<shared_ptr<Blob<Dtype> > >& parameters,
@@ -79,9 +73,6 @@ void MeanfieldIteration<Dtype>::PrePass(
   bilateral_norms_.CopyFrom(bilateral_norms, false, true);
 }
 
-/**
- * Forward pass during the inference.
- */
 template <typename Dtype>
 void MeanfieldIteration<Dtype>::Forward_cpu() {
   /*-------------------- Normalization --------------------*/
