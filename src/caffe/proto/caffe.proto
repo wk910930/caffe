@@ -564,7 +564,7 @@ message TransformationParameter {
 
   // mean_file and mean_value cannot be specified at the same time
   optional string mean_file = 4;
-  // if specified can be repeated once (would substract it from all the channels)
+  // if specified can be repeated once (would subtract it from all the channels)
   // or can be repeated the same number of times as channels
   // (would subtract them from the corresponding channel)
   repeated float mean_value = 5;
@@ -1297,7 +1297,7 @@ message MultiBoxLossParameter {
   optional bool do_neg_mining = 11;
   // The negative/positive ratio.
   optional float neg_pos_ratio = 12 [default = 3.0];
-  // The negative overlap upperbound for the unmatched predictions.
+  // The negative overlap upper-bound for the unmatched predictions.
   optional float neg_overlap = 13 [default = 0.5];
   // Type of coding method for bbox.
   optional PriorBoxParameter.CodeType code_type = 14 [default = CORNER];
@@ -1323,7 +1323,7 @@ message MultiBoxLossParameter {
     HARD_EXAMPLE = 2;
   }
   optional MiningType mining_type = 20 [default = MAX_NEGATIVE];
-  // Parameters used for non maximum suppression durig hard example mining.
+  // Parameters used for non maximum suppression during hard example mining.
   optional NonMaximumSuppressionParameter nms_param = 21;
   optional int32 sample_size = 22 [default = 64];
   optional bool use_prior_for_nms = 23 [default = false];
@@ -1443,7 +1443,7 @@ message PriorBoxParameter {
   // Variance for adjusting the prior bboxes.
   repeated float variance = 6;
   // By default, we calculate img_height, img_width, step_x, step_y based on
-  // bottom[0] (feat) and bottom[1] (img). Unless these values are explicitely
+  // bottom[0] (feat) and bottom[1] (img). Unless these values are explicitly
   // provided.
   // Explicitly provide the img_size.
   optional uint32 img_size = 7;
