@@ -32,6 +32,11 @@ void MultiBoxLossLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   loc_classes_ = share_location_ ? 1 : num_classes_;
   background_label_id_ = multibox_loss_param.background_label_id();
   use_difficult_gt_ = multibox_loss_param.use_difficult_gt();
+  Dtype overlap_threshold = multibox_loss_param.overlap_threshold();
+  Dtype neg_overlap = multibox_loss_param.neg_overlap();
+  CHECK_GE(overlap_threshold, neg_overlap)
+      << "fg_thresh should not be less than bg_thresh_high."
+      << "(Note: This condition-check needs more considerations)";
   mining_type_ = multibox_loss_param.mining_type();
   if (multibox_loss_param.has_do_neg_mining()) {
     LOG(WARNING) << "do_neg_mining is deprecated, use mining_type instead.";
