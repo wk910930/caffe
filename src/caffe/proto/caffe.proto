@@ -1284,7 +1284,7 @@ message MultiBoxLossParameter {
   }
   optional MatchType match_type = 6 [default = PER_PREDICTION];
   // If match_type is PER_PREDICTION, use overlap_threshold to
-  // determine the extra matching bboxes.
+  // determine the extra matching bboxes. [0.5, 1.0]
   optional float overlap_threshold = 7 [default = 0.5];
   // Use prior for matching.
   optional bool use_prior_for_matching = 8 [default = true];
@@ -1297,7 +1297,7 @@ message MultiBoxLossParameter {
   optional bool do_neg_mining = 11;
   // The negative/positive ratio.
   optional float neg_pos_ratio = 12 [default = 3.0];
-  // The negative overlap upper-bound for the unmatched predictions.
+  // The negative overlap upper-bound for the unmatched predictions. [0.0, 0.5)
   optional float neg_overlap = 13 [default = 0.5];
   // Type of coding method for bbox.
   optional PriorBoxParameter.CodeType code_type = 14 [default = CORNER];
