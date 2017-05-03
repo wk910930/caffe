@@ -977,7 +977,8 @@ message NonMaximumSuppressionParameter {
   // Threshold to be used in nms.
   optional float nms_threshold = 1 [default = 0.3];
   // Maximum number of results to be kept.
-  optional int32 top_k = 2;
+  // -1 means keeping all results
+  optional int32 top_k = 2 [default = -1];
   // Parameter for adaptive nms.
   optional float eta = 3 [default = 1.0];
 }
