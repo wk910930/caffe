@@ -374,7 +374,7 @@ solver_param = {
     'max_iter': 120000,
     'snapshot': 80000,
     'display': 100,
-    'average_loss': 100,
+    'average_loss': 1000,
     'type': "SGD",
     'solver_mode': solver_mode,
     'device_id': device_id,
