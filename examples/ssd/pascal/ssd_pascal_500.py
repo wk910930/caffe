@@ -337,7 +337,7 @@ elif normalization_mode == P.Loss.FULL:
 
 # Evaluate on whole test set.
 num_test_image = 4952
-test_batch_size = 1
+test_batch_size = 8
 test_iter = num_test_image / test_batch_size
 
 solver_param = {
