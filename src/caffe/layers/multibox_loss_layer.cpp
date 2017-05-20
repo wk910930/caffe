@@ -175,6 +175,9 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   vector<map<int, vector<float> > > all_match_overlaps;
   FindMatches(all_loc_preds, all_gt_bboxes, prior_bboxes, prior_variances,
               multibox_loss_param_, &all_match_overlaps, &all_match_indices_);
+  if (all_match_indices_.size() == 0) {
+    LOG(WARNING) << "No foreground proposals found.";
+  }
 
   num_matches_ = 0;
   int num_negs = 0;
