@@ -387,6 +387,7 @@ solver_param = {
     'snapshot': 40000,
     'display': 100,
     'average_loss': 1000,
+    'clip_gradients': 100,
     'type': "SGD",
     'solver_mode': solver_mode,
     'device_id': device_id,
