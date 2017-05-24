@@ -18,14 +18,11 @@ void PSROIPoolingLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   const vector<Blob<Dtype>*>& top) {
   PSROIPoolingParameter psroi_pooling_param =
       this->layer_param_.psroi_pooling_param();
-  spatial_scale_ = psroi_pooling_param.spatial_scale();
-  LOG(INFO) << "Spatial scale: " << spatial_scale_;
-
   CHECK_GT(psroi_pooling_param.output_dim(), 0)
     << "output_dim must be > 0";
   CHECK_GT(psroi_pooling_param.group_size(), 0)
     << "group_size must be > 0";
-
+  spatial_scale_ = psroi_pooling_param.spatial_scale();
   output_dim_ = psroi_pooling_param.output_dim();
   group_size_ = psroi_pooling_param.group_size();
   pooled_height_ = group_size_;
@@ -36,7 +33,7 @@ template <typename Dtype>
 void PSROIPoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   const vector<Blob<Dtype>*>& top) {
   channels_ = bottom[0]->channels();
-  CHECK_EQ(channels_, output_dim_*group_size_*group_size_)
+  CHECK_EQ(channels_, output_dim_ * group_size_ * group_size_)
     << "input channel number does not match layer parameters";
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();

@@ -67,7 +67,7 @@ __global__ void PSROIPoolingForward(
 
     int gw = pw;
     int gh = ph;
-    int c = (ctop*group_size + gh)*group_size + gw;
+    int c = (ctop * group_size + gh) * group_size + gw;
 
     bottom_data += (roi_batch_ind * channels + c) * height * width;
     Dtype out_sum = 0;
@@ -78,8 +78,8 @@ __global__ void PSROIPoolingForward(
       }
     }
 
-    Dtype bin_area = (hend - hstart)*(wend - wstart);
-    top_data[index] = is_empty? 0. : out_sum/bin_area;
+    Dtype bin_area = (hend - hstart) * (wend - wstart);
+    top_data[index] = is_empty ? 0. : out_sum / bin_area;
     mapping_channel[index] = c;
   }
 }
@@ -173,14 +173,13 @@ void PSROIPoolingLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   if (!propagate_down[0]) {
     return;
   }
-
   const Dtype* bottom_rois = bottom[1]->gpu_data();
   const Dtype* top_diff = top[0]->gpu_diff();
   Dtype* bottom_diff = bottom[0]->mutable_gpu_diff();
   const int bottom_count = bottom[0]->count();
   const int* mapping_channel_ptr = mapping_channel_.gpu_data();
-  caffe_gpu_set(bottom[1]->count(), Dtype(0), bottom[1]->mutable_gpu_diff());
-  caffe_gpu_set(bottom_count, Dtype(0), bottom_diff);
+  caffe_gpu_set(bottom[1]->count(), Dtype(0.), bottom[1]->mutable_gpu_diff());
+  caffe_gpu_set(bottom_count, Dtype(0.), bottom_diff);
   const int count = top[0]->count();
   // NOLINT_NEXT_LINE(whitespace/operators)
   PSROIPoolingBackwardAtomic<Dtype> << <CAFFE_GET_BLOCKS(count),
