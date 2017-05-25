@@ -63,13 +63,11 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
       this->minimum_loss_ = this->smoothed_loss_;
       this->iter_last_event_ = this->iter_;
     }
-
     // If sufficient iters have passed after the last event, then lower LR
     // An event is defined an update of minimum loss or LR
     if (this->current_step_ < this->param_.plateau_winsize_size()) {
       int iter_next_update = this->iter_last_event_
             + this->param_.plateau_winsize(this->current_step_);
-
       if (this->iter_ >= iter_next_update) {
         this->current_step_++;
         this->iter_last_event_ = this->iter_;
@@ -77,15 +75,16 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
                   << ", step = " << this->current_step_;
       }
     }
-
     if (this->param_.display() && this->iter_ % this->param_.display() == 0
         && this->iter_last_event_ > (this->iter_ - this->param_.display())) {
       LOG(INFO) << "Plateau Status: Iteration " << this->iter_
                 << ", current minimum_loss = " << this->minimum_loss_;
     }
-
     rate = this->param_.base_lr() *
         pow(this->param_.gamma(), this->current_step_);
+  } else if (lr_policy == "exp10") {
+    rate = this->param_.base_lr() * pow(Dtype(10.),
+        Dtype(-1 * this->iter_) / Dtype(this->param_.stepsize()));
   } else {
     LOG(FATAL) << "Unknown learning rate policy: " << lr_policy;
   }
