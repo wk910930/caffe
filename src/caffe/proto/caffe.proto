@@ -388,6 +388,7 @@ message LayerParameter {
   optional LogParameter log_param = 134;
   optional LRNParameter lrn_param = 118;
   optional MemoryDataParameter memory_data_param = 119;
+  optional MemoryParameter memory_param = 508;
   optional MVNParameter mvn_param = 120;
   optional NormalizeParameter norm_param = 504;
   optional ParameterParameter parameter_param = 145;
@@ -913,6 +914,18 @@ message MemoryDataParameter {
   optional uint32 channels = 2;
   optional uint32 height = 3;
   optional uint32 width = 4;
+}
+
+// Message that stores parameters used by MemoryLayer
+message MemoryParameter {
+  // Number of categories. Usually between [0, Max].
+  optional uint32 num_class = 1;
+  // What fraction of the moving average remains each iteration?
+  optional float moving_average_fraction = 2 [default = 0.9];
+  // If specified, ignore (copy directly) instances with the given label.
+  // For example, we would like to output instances with background
+  // label (i.e. label=0) directly instead of accumulating the memory.
+  optional uint32 ignore_label = 3;
 }
 
 message MVNParameter {
