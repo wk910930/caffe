@@ -8,7 +8,7 @@ namespace caffe {
 
 template <typename Dtype>
 void BNLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+    const vector<Blob<Dtype>*>& top) {
   frozen_ = this->layer_param_.bn_param().frozen();
   bn_momentum_ = this->layer_param_.bn_param().momentum();
   bn_eps_ = this->layer_param_.bn_param().eps();
@@ -41,7 +41,7 @@ void BNLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   }
   this->param_propagate_down_.resize(this->blobs_.size(), true);
 
-  // runing average stats does not use weight decay and learning rate
+  // Running average stats does not use weight decay and learning rate
   while (this->layer_param_.param_size() < 4) {
     this->layer_param_.mutable_param()->Add();
   }
@@ -51,7 +51,7 @@ void BNLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   this->layer_param_.mutable_param(3)->set_lr_mult(Dtype(0));
   this->layer_param_.mutable_param(3)->set_decay_mult(Dtype(0));
 
-  // shutdown scale and bias update in frozen mode
+  // Shutdown scale and bias update in frozen mode
   if (this->frozen_) {
     // slope
     this->layer_param_.mutable_param(0)->set_lr_mult(Dtype(0));
@@ -65,7 +65,7 @@ void BNLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
 template <typename Dtype>
 void BNLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+    const vector<Blob<Dtype>*>& top) {
   num_ = bottom[0]->num();
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
@@ -90,7 +90,7 @@ void BNLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 
 template <typename Dtype>
 void BNLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-  const vector<Blob<Dtype>*>& top) {
+    const vector<Blob<Dtype>*>& top) {
   const Dtype* const_bottom_data = bottom[0]->cpu_data();
   const Dtype* const_top_data = top[0]->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
@@ -114,11 +114,9 @@ void BNLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         batch_sum_multiplier_.cpu_data(), Dtype(0),
         batch_statistic_.mutable_cpu_data());
     // Add to the moving average
-    if (!frozen_) {
-      caffe_cpu_axpby(batch_statistic_.count(),
-          Dtype(1) - bn_momentum_, batch_statistic_.cpu_data(),
-          bn_momentum_, this->blobs_[2]->mutable_cpu_data());
-    }
+    caffe_cpu_axpby(batch_statistic_.count(),
+        Dtype(1) - bn_momentum_, batch_statistic_.cpu_data(),
+        bn_momentum_, this->blobs_[2]->mutable_cpu_data());
   }
   // Broadcast the mean vector
   caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, channels_, 1,
@@ -148,7 +146,6 @@ void BNLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     caffe_cpu_gemv<Dtype>(CblasTrans, num_, channels_, Dtype(1) / num_,
         spatial_statistic_.cpu_data(), batch_sum_multiplier_.cpu_data(),
         Dtype(0), batch_statistic_.mutable_cpu_data());
-
     // Add to the moving average
     caffe_cpu_axpby(batch_statistic_.count(),
         Dtype(1) - bn_momentum_, batch_statistic_.cpu_data(),
@@ -157,15 +154,15 @@ void BNLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
   // Add eps
   caffe_add_scalar(batch_statistic_.count(), bn_eps_,
-                   batch_statistic_.mutable_cpu_data());
+      batch_statistic_.mutable_cpu_data());
   // Inverse standard deviation
   caffe_powx(batch_statistic_.count(), batch_statistic_.cpu_data(),
-             Dtype(-0.5), batch_statistic_.mutable_cpu_data());
+      Dtype(-0.5), batch_statistic_.mutable_cpu_data());
 
   // Broadcast the inverse std
   caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, channels_, 1,
-        Dtype(1), batch_sum_multiplier_.cpu_data(), batch_statistic_.cpu_data(),
-        Dtype(0), spatial_statistic_.mutable_cpu_data());
+      Dtype(1), batch_sum_multiplier_.cpu_data(), batch_statistic_.cpu_data(),
+      Dtype(0), spatial_statistic_.mutable_cpu_data());
   caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_ * channels_,
       height_ * width_, 1, Dtype(1),
       spatial_statistic_.cpu_data(), spatial_sum_multiplier_.cpu_data(),
@@ -174,7 +171,7 @@ void BNLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   caffe_mul(broadcast_buffer_.count(), const_top_data,
       broadcast_buffer_.cpu_data(), top_data);
 
-  // Save the normalized inputs and std for backprop
+  // Save the normalized inputs and std for back-prop
   if (!frozen_) {
     caffe_copy(broadcast_buffer_.count(), const_top_data,
         x_norm_.mutable_cpu_data());
@@ -207,7 +204,7 @@ void BNLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
 template <typename Dtype>
 void BNLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
-  const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+    const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
   if (frozen_) {
     if (propagate_down[0]) {
       const Dtype* const_top_diff = top[0]->cpu_diff();
@@ -238,7 +235,7 @@ void BNLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     return;
   }
 
-  // gradient w.r.t. slope
+  // Gradient w.r.t. slope
   if (this->param_propagate_down_[0]) {
     const Dtype* const_top_diff = top[0]->cpu_diff();
     Dtype* scale_diff = this->blobs_[0]->mutable_cpu_diff();
@@ -253,7 +250,7 @@ void BNLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         Dtype(1), scale_diff);
   }
 
-  // gradient w.r.t. bias
+  // Gradient w.r.t. bias
   if (this->param_propagate_down_[1]) {
     const Dtype* const_top_diff = top[0]->cpu_diff();
     Dtype* shift_diff = this->blobs_[1]->mutable_cpu_diff();
@@ -265,7 +262,7 @@ void BNLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         Dtype(1), shift_diff);
   }
 
-  // gradient w.r.t. normalized inputs
+  // Gradient w.r.t. normalized inputs
   if (propagate_down[0]) {
     const Dtype* const_top_diff = top[0]->cpu_diff();
     const Dtype* const_bottom_diff = bottom[0]->cpu_diff();
@@ -334,7 +331,6 @@ void BNLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         broadcast_buffer_.cpu_data(), bottom_diff);
   }
 }
-
 
 #ifdef CPU_ONLY
 STUB_GPU(BNLayer);
