@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # scale_5 ==> 3 x 3
     # scale_6 ==> 1 x 1
     mbox_source_layers = ['scale_1', 'scale_2', 'scale_3', 'scale_4', 'scale_5', 'scale_6']
-    mbox_source_layers_size = [40, 20, 10, 5, 3, 1]
+    mbox_source_layers_size = [38, 19, 10, 5, 3, 1]
     # in percent %
     min_ratio = 20
     max_ratio = 90
