@@ -31,6 +31,7 @@ if __name__ == '__main__':
     steps = [int(math.ceil(float(min_dim) / x)) for x in mbox_source_layers_size]
 
     print '====== Prior Box Param ======'
+    print 'min_dim: {}'.format(min_dim)
     print 'min_raio: {}'.format(min_ratio)
     print 'max_ratio: {}'.format(max_ratio)
     print '-' * 48
