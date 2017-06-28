@@ -18,7 +18,7 @@ def parse_args():
                         required=True, type=str)
     parser.add_argument('--net', dest='caffemodel',
                         help='binary caffemodel',
-                        required=True, type=str)
+                        required=False, type=str)
     args = parser.parse_args()
     return args
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     print args
 
     caffe.set_mode_cpu()
-    net = caffe.Net(args.prototxt, args.caffemodel, caffe.TEST)
+    net = caffe.Net(args.prototxt, caffe.TEST)
 
     # PROTOTXT
     print '== NET =='
