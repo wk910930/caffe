@@ -31,7 +31,10 @@ if __name__ == '__main__':
     print args
 
     caffe.set_mode_cpu()
-    net = caffe.Net(args.prototxt, caffe.TEST)
+    if args.caffemodel is None:
+        net = caffe.Net(args.prototxt, caffe.TEST)
+    else:
+        net = caffe.Net(args.prototxt, args.caffemodel, caffe.TEST)
 
     # PROTOTXT
     print '============ NET ============'
