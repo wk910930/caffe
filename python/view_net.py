@@ -4,7 +4,7 @@ Have a view of net
 """
 
 import argparse
-
+import numpy as np
 from google.protobuf import text_format
 
 import caffe
@@ -19,6 +19,9 @@ def parse_args():
     parser.add_argument('--net', dest='caffemodel',
                         help='binary caffemodel',
                         required=False, type=str)
+    parser.add_argument('--layer_name', dest='layer_name',
+                        help='specify name of the layer to show its parameters',
+                        required=False, type=str)
     args = parser.parse_args()
     return args
 
@@ -31,7 +34,7 @@ if __name__ == '__main__':
     net = caffe.Net(args.prototxt, caffe.TEST)
 
     # PROTOTXT
-    print '== NET =='
+    print '============ NET ============'
     net_proto = caffe_pb2.NetParameter()
     text_format.Merge(open(args.prototxt).read(), net_proto)
     print net_proto
@@ -40,9 +43,11 @@ if __name__ == '__main__':
     # For each layer, check the activation shapes, which typically
     # have the form (batch_size, channel_dim, height, width).
     # The activations are exposed as an OrderedDict, net.blobs.
-    print '== Activations =='
+    print '============ Activations ============'
     for layer_name, blob in net.blobs.iteritems():
         print layer_name + '\t' + str(blob.data.shape)
+
+    print
 
     # PARAMETERS
     # The parameters are exposed as another OrderedDict, net.params.
@@ -50,9 +55,23 @@ if __name__ == '__main__':
     # The param shapes typically have the
     # form (output_channels, input_channels, filter_height, filter_width) (for the weights)
     # and the 1-dimensional shape (output_channels,) (for the biases).
-    print '== Parameters =='
+    print '============ Parameters ============'
     for layer_name, param in net.params.iteritems():
         item = layer_name + '\t'
         for i in xrange(len(param)):
             item = item + str(param[i].data.shape) + ' '
         print item
+
+    # Display params
+    if args.layer_name is not None:
+        print ''
+        np.set_printoptions(linewidth=160)
+        np.set_printoptions(suppress=True)
+        np.set_printoptions(precision=2)
+        for layer_name, param in net.params.iteritems():
+            if layer_name == args.layer_name:
+                print 'Showing [{}]'.format(layer_name)
+                for i in xrange(len(param)):
+                    print '>> blob[{}].shape={}'.format(i, param[i].data.shape)
+                    print param[i].data
+                    print ''
