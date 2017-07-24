@@ -192,28 +192,31 @@ void Detector::Preprocess(const cv::Mat& img,
                             std::vector<cv::Mat>* input_channels) {
   /* Convert the input image to the input image format of the network. */
   cv::Mat sample;
-  if (img.channels() == 3 && num_channels_ == 1)
+  if (img.channels() == 3 && num_channels_ == 1) {
     cv::cvtColor(img, sample, cv::COLOR_BGR2GRAY);
-  else if (img.channels() == 4 && num_channels_ == 1)
+  } else if (img.channels() == 4 && num_channels_ == 1) {
     cv::cvtColor(img, sample, cv::COLOR_BGRA2GRAY);
-  else if (img.channels() == 4 && num_channels_ == 3)
+  } else if (img.channels() == 4 && num_channels_ == 3) {
     cv::cvtColor(img, sample, cv::COLOR_BGRA2BGR);
-  else if (img.channels() == 1 && num_channels_ == 3)
+  } else if (img.channels() == 1 && num_channels_ == 3) {
     cv::cvtColor(img, sample, cv::COLOR_GRAY2BGR);
-  else
+  } else {
     sample = img;
+  }
 
   cv::Mat sample_resized;
-  if (sample.size() != input_geometry_)
+  if (sample.size() != input_geometry_) {
     cv::resize(sample, sample_resized, input_geometry_);
-  else
+  } else {
     sample_resized = sample;
+  }
 
   cv::Mat sample_float;
-  if (num_channels_ == 3)
+  if (num_channels_ == 3) {
     sample_resized.convertTo(sample_float, CV_32FC3);
-  else
+  } else {
     sample_resized.convertTo(sample_float, CV_32FC1);
+  }
 
   cv::Mat sample_normalized;
   cv::subtract(sample_float, mean_, sample_normalized);
