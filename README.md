@@ -1,3 +1,5 @@
+**Note:** This is a fork (`mem` branch) from one of amazing projects made by [Xiong](https://github.com/yjxiong). Many thanks to you, Xiong! For more cool stuff, please refer to [this](https://github.com/yjxiong/caffe) .
+
 # Action Recognition with Deep Learning
 
 [![Build Status](https://travis-ci.org/yjxiong/caffe.svg?branch=action_recog)](https://travis-ci.org/yjxiong/caffe)
