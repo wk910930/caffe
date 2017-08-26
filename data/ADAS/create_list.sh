@@ -3,7 +3,7 @@
 root_dir=$HOME/data/ADASdevkit/
 sub_dir=ImageSets/Main
 bash_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-for dataset in train_half test
+for dataset in train_refine test
 do
   dst_file=$bash_dir/$dataset.txt
   if [ -f $dst_file ]
@@ -38,7 +38,7 @@ do
   fi
 
   # Shuffle train file.
-  if [ $dataset == "train_half" ]
+  if [ $dataset == "train_refine" ]
   then
     rand_file=$dst_file.random
     cat $dst_file | perl -MList::Util=shuffle -e 'print shuffle(<STDIN>);' > $rand_file
