@@ -57,10 +57,10 @@ resume_training = True
 # If true, Remove old model files.
 remove_old_models = False
 
-# The database file for training data. Created by data/cityspace/create_data.sh
-train_data = "examples/cityspace/cityspace_train_lmdb"
-# The database file for testing data. Created by data/cityspace/create_data.sh
-test_data = "examples/cityspace/cityspace_val_lmdb"
+# The database file for training data. Created by data/cityscapes/create_data.sh
+train_data = "examples/cityscapes/cityscapes_train_lmdb"
+# The database file for testing data. Created by data/cityscapes/create_data.sh
+test_data = "examples/cityscapes/cityscapes_val_lmdb"
 # Specify the batch sampler.
 resize_width = 500
 resize_height = 500
@@ -213,16 +213,16 @@ else:
 # Modify the job name if you want.
 job_name = "SSD_{}".format(resize)
 # The name of the model. Modify it if you want.
-model_name = "VGG_cityspace_{}".format(job_name)
+model_name = "VGG_cityscapes_{}".format(job_name)
 
 # Directory which stores the model .prototxt file.
-save_dir = "models/VGGNet/cityspace/{}".format(job_name)
+save_dir = "models/VGGNet/cityscapes/{}".format(job_name)
 # Directory which stores the snapshot of models.
-snapshot_dir = "models/VGGNet/cityspace/{}".format(job_name)
+snapshot_dir = "models/VGGNet/cityscapes/{}".format(job_name)
 # Directory which stores the job script and log file.
-job_dir = "jobs/VGGNet/cityspace/{}".format(job_name)
+job_dir = "jobs/VGGNet/cityscapes/{}".format(job_name)
 # Directory which stores the detection results.
-output_result_dir = "{}/data/cityspace/results/cityspace/{}/Main".format(os.environ['HOME'], job_name)
+output_result_dir = "{}/data/cityscapes/results/cityscapes/{}/Main".format(os.environ['HOME'], job_name)
 
 # model definition files.
 train_net_file = "{}/train.prototxt".format(save_dir)
@@ -234,12 +234,12 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 # job script path.
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
-# Stores the test image names and sizes. Created by data/cityspace/create_list.sh
-name_size_file = "data/cityspace/val_name_size.txt"
+# Stores the test image names and sizes. Created by data/cityscapes/create_list.sh
+name_size_file = "data/cityscapes/val_name_size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
 pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
 # Stores LabelMapItem.
-label_map_file = "data/cityspace/labelmap_cityspace.prototxt"
+label_map_file = "data/cityscapes/labelmap_cityscapes.prototxt"
 
 # MultiBoxLoss parameters.
 num_classes = 11
