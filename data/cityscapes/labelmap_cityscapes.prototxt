@@ -4,52 +4,17 @@ item {
   display_name: "background"
 }
 item {
-  name: "person"
-  label: 1
-  display_name: "person"
-}
-item {
-  name: "rider"
-  label: 2
-  display_name: "rider"
-}
-item {
   name: "car"
-  label: 3
+  label: 1
   display_name: "car"
 }
 item {
-  name: "truck"
-  label: 4
-  display_name: "truck"
+  name: "cycle"
+  label: 2
+  display_name: "cycle"
 }
 item {
-  name: "bus"
-  label: 5
-  display_name: "bus"
-}
-item {
-  name: "caravan"
-  label: 6
-  display_name: "caravan"
-}
-item {
-  name: "trailer"
-  label: 7
-  display_name: "trailer"
-}
-item {
-  name: "train"
-  label: 8
-  display_name: "train"
-}
-item {
-  name: "motorcycle"
-  label: 9
-  display_name: "motorcycle"
-}
-item {
-  name: "bicycle"
-  label: 10
-  display_name: "bicycle"
+  name: "person"
+  label: 3
+  display_name: "person"
 }

@@ -242,7 +242,7 @@ pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
 label_map_file = "data/cityscapes/labelmap_cityscapes.prototxt"
 
 # MultiBoxLoss parameters.
-num_classes = 11
+num_classes = 4
 share_location = True
 background_label_id=0
 train_on_diff_gt = True
