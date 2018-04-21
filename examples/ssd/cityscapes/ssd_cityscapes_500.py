@@ -366,7 +366,7 @@ solver_param = {
     'test_interval': 2000,
     'eval_type': "detection",
     'ap_version': "11point",
-    'show_per_class_result': True
+    'show_per_class_result': True,
     'test_initialization': False,
     }
 
