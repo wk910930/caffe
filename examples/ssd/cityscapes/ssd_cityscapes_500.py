@@ -285,8 +285,8 @@ min_dim = 500
 # pool6 ==> 1 x 1
 mbox_source_layers = ['conv4_3', 'fc7', 'conv6_2', 'conv7_2', 'conv8_2', 'conv9_2', 'pool6']
 # in percent %
-min_ratio = 15
-max_ratio = 95
+min_ratio = 10
+max_ratio = 85
 step = int(math.floor((max_ratio - min_ratio) / (len(mbox_source_layers) - 2)))
 min_sizes = []
 max_sizes = []
