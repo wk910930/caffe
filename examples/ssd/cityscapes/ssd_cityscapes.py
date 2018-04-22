@@ -263,7 +263,7 @@ pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
 label_map_file = "data/cityscapes/labelmap_cityscapes.prototxt"
 
 # MultiBoxLoss parameters.
-num_classes = 11
+num_classes = 4
 share_location = True
 background_label_id=0
 train_on_diff_gt = True
@@ -305,8 +305,8 @@ min_dim = 300
 # conv9_2 ==> 1 x 1
 mbox_source_layers = ['conv4_3', 'fc7', 'conv6_2', 'conv7_2', 'conv8_2', 'conv9_2']
 # in percent %
-min_ratio = 20
-max_ratio = 90
+min_ratio = 10
+max_ratio = 85
 step = int(math.floor((max_ratio - min_ratio) / (len(mbox_source_layers) - 2)))
 min_sizes = []
 max_sizes = []
@@ -367,11 +367,11 @@ solver_param = {
     'base_lr': base_lr,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
-    'stepvalue': [10000, 16000],
+    'stepvalue': [24000, 26000, 28000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 20000,
+    'max_iter': 30000,
     'snapshot': 2000,
     'display': 100,
     'average_loss': 1000,
@@ -386,6 +386,7 @@ solver_param = {
     'test_interval': 2000,
     'eval_type': "detection",
     'ap_version': "11point",
+    'show_per_class_result': True,
     'test_initialization': False,
     }
 
