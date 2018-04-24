@@ -261,11 +261,13 @@ void DetectionOutputLayer<Dtype>::Forward_cpu(
               ymax_sum += voter.score() * voter.ymax();
             }
           }
-          candidate.set_xmin(xmin_sum / score_sum);
-          candidate.set_ymin(ymin_sum / score_sum);
-          candidate.set_xmax(xmax_sum / score_sum);
-          candidate.set_ymax(ymax_sum / score_sum);
-          all_decode_bboxes[i].find(label)->second[idx] = candidate;
+          if (score_sum > 1e-5) {
+            candidate.set_xmin(xmin_sum / score_sum);
+            candidate.set_ymin(ymin_sum / score_sum);
+            candidate.set_xmax(xmax_sum / score_sum);
+            candidate.set_ymax(ymax_sum / score_sum);
+            all_decode_bboxes[i].find(label)->second[idx] = candidate;
+          }
         }
       }
       num_det += indices[c].size();
