@@ -88,6 +88,7 @@ class DetectionOutputLayer : public Layer<Dtype> {
   float nms_threshold_;
   int top_k_;
   float eta_;
+  float bbox_voting_threshold_;
 
   bool need_save_;
   string output_directory_;

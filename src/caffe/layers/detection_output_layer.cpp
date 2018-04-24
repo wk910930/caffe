@@ -38,6 +38,12 @@ void DetectionOutputLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   if (detection_output_param.nms_param().has_top_k()) {
     top_k_ = detection_output_param.nms_param().top_k();
   }
+  if (detection_output_param.has_bbox_voting_param()) {
+    bbox_voting_threshold_ =
+        detection_output_param.bbox_voting_param().bbox_voting_threshold();
+  } else {
+    bbox_voting_threshold_ = -1.0f;
+  }
   const SaveOutputParameter& save_output_param =
       detection_output_param.save_output_param();
   output_directory_ = save_output_param.output_directory();
@@ -234,6 +240,34 @@ void DetectionOutputLayer<Dtype>::Forward_cpu(
       const vector<NormalizedBBox>& bboxes = decode_bboxes.find(label)->second;
       ApplyNMSFast(bboxes, scores, confidence_threshold_, nms_threshold_, eta_,
           top_k_, &(indices[c]));
+      // Bounding box voting
+      if (bbox_voting_threshold_ > 0) {
+        for (int k = 0; k < indices[c].size(); ++k) {
+          int idx = indices[c][k];
+          float score_sum = 0.0f;
+          float xmin_sum = 0.0f;
+          float ymin_sum = 0.0f;
+          float xmax_sum = 0.0f;
+          float ymax_sum = 0.0f;
+          NormalizedBBox candidate = bboxes[idx];
+          for (int z = 0; z < bboxes.size(); ++z) {
+            NormalizedBBox voter = bboxes[z];
+            float overlap = JaccardOverlap(candidate, voter);
+            if (overlap >= bbox_voting_threshold_) {
+              score_sum += voter.score();
+              xmin_sum += voter.score() * voter.xmin();
+              ymin_sum += voter.score() * voter.ymin();
+              xmax_sum += voter.score() * voter.xmax();
+              ymax_sum += voter.score() * voter.ymax();
+            }
+          }
+          candidate.set_xmin(xmin_sum / score_sum);
+          candidate.set_ymin(ymin_sum / score_sum);
+          candidate.set_xmax(xmax_sum / score_sum);
+          candidate.set_ymax(ymax_sum / score_sum);
+          all_decode_bboxes[i].find(label)->second[idx] = candidate;
+        }
+      }
       num_det += indices[c].size();
     }
     if (keep_top_k_ > -1 && num_det > keep_top_k_) {

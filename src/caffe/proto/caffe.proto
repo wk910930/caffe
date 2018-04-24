@@ -1029,6 +1029,12 @@ message SaveOutputParameter {
   optional ResizeParameter resize_param = 7;
 }
 
+// Bounding box voting is a trick introduced in "Object detection via a multi-region &
+// semantic segmentation-aware CNN model".
+message BboxVotingParameter {
+  optional float  bbox_voting_threshold = 1 [default = 0.5];
+}
+
 // Message that store parameters used by DetectionOutputLayer
 message DetectionOutputParameter {
   // Number of classes to be predicted. Required!
@@ -1040,6 +1046,7 @@ message DetectionOutputParameter {
   optional int32 background_label_id = 3 [default = 0];
   // Parameters used for non maximum suppression.
   optional NonMaximumSuppressionParameter nms_param = 4;
+  optional BboxVotingParameter bbox_voting_param = 13;
   // Parameters used for saving detection results.
   optional SaveOutputParameter save_output_param = 5;
   // Type of coding method for bbox.
