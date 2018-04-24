@@ -254,11 +254,12 @@ void DetectionOutputLayer<Dtype>::Forward_cpu(
             NormalizedBBox voter = bboxes[z];
             float overlap = JaccardOverlap(candidate, voter);
             if (overlap >= bbox_voting_threshold_) {
-              score_sum += voter.score();
-              xmin_sum += voter.score() * voter.xmin();
-              ymin_sum += voter.score() * voter.ymin();
-              xmax_sum += voter.score() * voter.xmax();
-              ymax_sum += voter.score() * voter.ymax();
+              float score = scores[z];
+              score_sum += score;
+              xmin_sum += score * voter.xmin();
+              ymin_sum += score * voter.ymin();
+              xmax_sum += score * voter.xmax();
+              ymax_sum += score * voter.ymax();
             }
           }
           if (score_sum > 1e-5) {
