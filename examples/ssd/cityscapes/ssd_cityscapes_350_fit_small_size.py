@@ -48,7 +48,7 @@ def AddExtraLayers(net, use_batchnorm=True, lr_mult=1):
 
     from_layer = out_layer
     out_layer = "conv8_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 0, 1,
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 1,
       lr_mult=lr_mult)
 
     # 1 x 1
@@ -59,7 +59,7 @@ def AddExtraLayers(net, use_batchnorm=True, lr_mult=1):
 
     from_layer = out_layer
     out_layer = "conv9_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 0, 1,
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 1,
       lr_mult=lr_mult)
 
     return net
@@ -427,7 +427,7 @@ net.data, net.label = CreateAnnotatedDataLayer(train_data, batch_size=batch_size
         train=True, output_label=True, label_map_file=label_map_file,
         transform_param=train_transform_param, batch_sampler=batch_sampler)
 
-VGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True,
+CustomVGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True,
     dropout=False)
 
 AddExtraLayers(net, use_batchnorm, lr_mult=lr_mult)
@@ -456,7 +456,7 @@ net.data, net.label = CreateAnnotatedDataLayer(test_data, batch_size=test_batch_
         train=False, output_label=True, label_map_file=label_map_file,
         transform_param=test_transform_param)
 
-VGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True,
+CustomVGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True,
     dropout=False)
 
 AddExtraLayers(net, use_batchnorm, lr_mult=lr_mult)
