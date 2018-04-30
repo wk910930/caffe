@@ -48,7 +48,7 @@ def AddExtraLayers(net, use_batchnorm=True, lr_mult=1):
 
     from_layer = out_layer
     out_layer = "conv8_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 1,
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 2,
       lr_mult=lr_mult)
 
     # 1 x 1
@@ -59,7 +59,7 @@ def AddExtraLayers(net, use_batchnorm=True, lr_mult=1):
 
     from_layer = out_layer
     out_layer = "conv9_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 1,
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 2,
       lr_mult=lr_mult)
 
     return net
