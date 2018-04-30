@@ -310,8 +310,8 @@ max_sizes = [70, 120, 170, 220, 270, 320]
 
 steps = [8, 16, 32, 64, 100, 300]
 aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
-# L2 normalize conv4_3.
-normalizations = [20, -1, -1, -1, -1, -1]
+# L2 normalize.
+normalizations = [-1, -1, -1, -1, -1, -1]
 # variance used to encode/decode prior bboxes.
 if code_type == P.PriorBox.CENTER_SIZE:
   prior_variance = [0.1, 0.1, 0.2, 0.2]
