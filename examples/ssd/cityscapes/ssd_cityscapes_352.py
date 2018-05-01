@@ -292,7 +292,7 @@ min_dim = 352
 # conv7_2 ==> 5 x 5
 # conv8_2 ==> 3 x 3
 # conv9_2 ==> 1 x 1
-mbox_source_layers = ['conv4_3', 'fc6', 'conv6_2', 'conv7_2', 'conv8_2']
+mbox_source_layers = ['conv4_3', 'conv5_3', 'conv6_2', 'conv7_2', 'conv8_2']
 
 min_sizes = [20, 70, 120, 170, 220]
 max_sizes = [70, 120, 170, 220, 270]

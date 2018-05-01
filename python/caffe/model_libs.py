@@ -524,26 +524,6 @@ def CustomVGGNetBody(net, from_layer, need_fc=True, fully_conv=False, reduced=Fa
     net.conv5_3 = L.Convolution(net.relu5_2, num_output=512, pad=pad, kernel_size=kernel_size, dilation=dilation, **kwargs)
     net.relu5_3 = L.ReLU(net.conv5_3, in_place=True)
 
-    if need_fc:
-        name = 'conv5_4'
-        net[name] = L.Convolution(net.relu5_3, num_output=512, pad=1, kernel_size=3, stride=1, **kwargs)
-
-        if fully_conv:
-            pad = 1
-            kernel_size = 3
-            num_output = 1024
-            net.fc6 = L.Convolution(net[name], num_output=num_output, pad=pad, kernel_size=kernel_size, **kwargs)
-
-            net.relu6 = L.ReLU(net.fc6, in_place=True)
-            if dropout:
-                net.drop6 = L.Dropout(net.relu6, dropout_ratio=0.5, in_place=True)
-
-        else:
-            net.fc6 = L.InnerProduct(net.pool5, num_output=4096)
-            net.relu6 = L.ReLU(net.fc6, in_place=True)
-            if dropout:
-                net.drop6 = L.Dropout(net.relu6, dropout_ratio=0.5, in_place=True)
-
     # Update freeze layers.
     kwargs['param'] = [dict(lr_mult=0, decay_mult=0), dict(lr_mult=0, decay_mult=0)]
     layers = net.keys()
