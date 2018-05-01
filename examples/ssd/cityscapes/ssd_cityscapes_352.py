@@ -20,7 +20,7 @@ def AddExtraLayers(net, use_batchnorm=True, lr_mult=1):
 
     # TODO(weiliu89): Construct the name using the last layer to avoid duplication.
     # 10 x 10
-    out_layer = "conv6_1"
+    out_layer = "conv6_1_st"
     ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1,
         lr_mult=lr_mult)
 
