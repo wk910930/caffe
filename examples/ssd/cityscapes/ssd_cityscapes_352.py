@@ -21,17 +21,17 @@ def AddExtraLayers(net, use_batchnorm=True, lr_mult=1):
     # TODO(weiliu89): Construct the name using the last layer to avoid duplication.
     # 10 x 10
     out_layer = "conv6_1_st"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1,
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 128, 1, 0, 1,
         lr_mult=lr_mult)
 
     from_layer = out_layer
-    out_layer = "conv6_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 512, 3, 1, 2,
+    out_layer = "conv6_2_st"
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 2,
         lr_mult=lr_mult)
 
     # 5 x 5
     from_layer = out_layer
-    out_layer = "conv7_1"
+    out_layer = "conv7_1_st"
     ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 128, 1, 0, 1,
       lr_mult=lr_mult)
 
@@ -292,7 +292,7 @@ min_dim = 352
 # conv7_2 ==> 5 x 5
 # conv8_2 ==> 3 x 3
 # conv9_2 ==> 1 x 1
-mbox_source_layers = ['conv4_3', 'conv5_3', 'conv6_2', 'conv7_2', 'conv8_2']
+mbox_source_layers = ['conv4_3', 'conv5_3', 'conv6_2_st', 'conv7_2', 'conv8_2']
 
 min_sizes = [20, 70, 120, 170, 220]
 max_sizes = [70, 120, 170, 220, 270]
@@ -311,7 +311,7 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "0,1,2,3"
+gpus = "0,1,2,3,4,5,6,7"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
